@@ -27,6 +27,7 @@ CREATE TABLE "Translation" (
   "name" varchar UNIQUE NOT NULL,
   "full_name" varchar UNIQUE,
   "year" varchar[4],
+  "license" varchar,
   "description" text
 );
 
