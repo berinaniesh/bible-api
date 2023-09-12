@@ -1,6 +1,6 @@
 [package]
 name = "bible-parser"
-author = ["Berin Aniesh <berinaniesh@gmail.com>"]
+authors = ["Berin Aniesh <berinaniesh@gmail.com>"]
 version = "0.1.0"
 edition = "2021"
 
