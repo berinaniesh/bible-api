@@ -5,7 +5,7 @@ CREATE TABLE `Language` (
 
 CREATE TABLE `Translation` (
   `id` integer PRIMARY KEY AUTO_INCREMENT,
-  `language_id` integer NOT NULL,
+  `language_id` integer UNIQUE NOT NULL,
   `name` varchar(255) UNIQUE NOT NULL,
   `full_name` varchar(255) UNIQUE,
   `year` varchar[4],
@@ -14,7 +14,7 @@ CREATE TABLE `Translation` (
 
 CREATE TABLE `Book` (
   `id` integer PRIMARY KEY AUTO_INCREMENT,
-  `translation_id` integer NOT NULL,
+  `translation_id` integer UNIQUE NOT NULL,
   `name` varchar(255) NOT NULL,
   `long_name` varchar(255) NOT NULL,
   `regional_name` varchar(255),
@@ -22,20 +22,20 @@ CREATE TABLE `Book` (
   `book_number` integer NOT NULL,
   `abbreviation` varchar(255),
   `testament` ENUM ('OldTestament', 'NewTestament'),
-  `Division` ENUM ('Pentateuch', 'HistoricalBook', 'WisdomBook', 'MajorProphet', 'MinorProphet', 'Gospel', 'History', 'PaulineEpistle', 'GeneralEpistle', 'Prophecy'),
+  `division` ENUM ('Pentateuch', 'HistoricalBook', 'WisdomBook', 'MajorProphet', 'MinorProphet', 'Gospel', 'History', 'PaulineEpistle', 'GeneralEpistle', 'Prophecy'),
   `description` text
 );
 
 CREATE TABLE `Chapter` (
   `id` integer PRIMARY KEY AUTO_INCREMENT,
-  `book_id` integer NOT NULL,
+  `book_id` integer UNIQUE NOT NULL,
   `chapter_number` integer NOT NULL,
   `description` text
 );
 
 CREATE TABLE `Verse` (
   `id` integer PRIMARY KEY AUTO_INCREMENT,
-  `chapter_id` integer NOT NULL,
+  `chapter_id` integer UNIQUE NOT NULL,
   `verse_number` integer,
   `verse` varchar(255) NOT NULL
 );
