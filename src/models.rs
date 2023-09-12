@@ -8,7 +8,7 @@ enum Translation {
     TOVBSI,
 }
 
-impl Translation{
+impl Translation {
     fn full_form(&self) -> &str {
         match self {
             Translation::KJV => "King James Version",
@@ -17,8 +17,8 @@ impl Translation{
     }
     fn year(&self) -> u16 {
         match self {
-            BibleVersion::KJV => 1769,
-            BibleVersion::TAOBSI => 1957, 
+            Translation::KJV => 1769,
+            Translation::TOVBSI => 1957,
         }
     }
 }
@@ -30,7 +30,7 @@ enum Testament {
 
 struct Bible {
     language: Language,
-    bible_version: BibleVersion,
+    translation: Translation,
     description: Option<String>,
     books: Vec<Book>,
 }
@@ -39,6 +39,10 @@ struct Book {
     bible: Bible,
     name: String,
     long_name: String,
+    regional_name: String,
+    regional_long_name: String,
+    abbreviation: String,
+    testament: Testament,
     description: Option<String>,
     chapters: Vec<Chapter>,
 }
