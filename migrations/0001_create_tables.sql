@@ -26,7 +26,7 @@ CREATE TABLE "Translation" (
   "language_id" integer NOT NULL,
   "name" varchar UNIQUE NOT NULL,
   "full_name" varchar UNIQUE,
-  "year" varchar[4],
+  "year" varchar,
   "license" varchar,
   "description" text
 );
@@ -65,4 +65,4 @@ ALTER TABLE "Book" ADD FOREIGN KEY ("translation_id") REFERENCES "Translation" (
 
 ALTER TABLE "Chapter" ADD FOREIGN KEY ("book_id") REFERENCES "Book" ("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
-ALTER TABLE "Verse" ADD FOREIGN KEY ("chapter_id") REFERENCES "Book" ("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "Verse" ADD FOREIGN KEY ("chapter_id") REFERENCES "Chapter" ("id") ON DELETE CASCADE ON UPDATE CASCADE;
