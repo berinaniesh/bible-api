@@ -55,7 +55,7 @@ CREATE TABLE "Chapter" (
 CREATE TABLE "Verse" (
   "id" SERIAL PRIMARY KEY,
   "chapter_id" integer NOT NULL,
-  "verse_number" integer,
+  "verse_number" integer NOT NULL,
   "verse" varchar NOT NULL
 );
 
