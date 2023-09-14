@@ -22,7 +22,7 @@ struct Verse {
 }
 
 #[derive(Debug, Deserialize)]
-struct Filter {
+struct VerseFilter {
     translation: Option<String>,
     book: Option<String>,
     abbreviation: Option<String>,
@@ -34,7 +34,7 @@ struct Filter {
     endverse: Option<i32>,
 }
 
-impl Filter {
+impl VerseFilter {
     fn sanitize(&mut self) {
         if self.translation.is_some() {
             let t = self.translation.clone().unwrap();
@@ -62,6 +62,22 @@ struct TranslationName {
     name: String,
 }
 
+#[derive(Debug, Deserialize)]
+struct TranslationName2 {
+    translation: Option<String>,
+}
+
+impl TranslationName2 {
+    fn sanitize(&mut self) {
+        if self.translation.is_some() {
+            let t = self.translation.clone().unwrap();
+            if t.contains("'") {
+                self.translation = None;
+            }
+        }
+    } 
+}
+
 #[derive(Debug, Serialize)]
 struct BookName {
     name: String,
@@ -78,7 +94,7 @@ struct TranslationInfo {
 }
 
 #[allow(unused_assignments)]
-fn get_query(qp: web::Query<Filter>) -> String {
+fn get_query(qp: web::Query<VerseFilter>) -> String {
     let mut is_first = true;
     let mut base_query = String::from(
         r#"select t.name as translation,
@@ -158,7 +174,7 @@ fn get_query(qp: web::Query<Filter>) -> String {
 
 #[get("/")]
 async fn home(app_data: web::Data<AppData>) -> HttpResponse {
-    let t = sqlx::query_as!(TranslationName, r#"SELECT name from "Translation""#)
+    let t = sqlx::query_as!(TranslationName, r#"SELECT name from "Translation" order by id"#)
         .fetch_all(&app_data.pool)
         .await
         .unwrap();
@@ -188,8 +204,18 @@ async fn get_translations(app_data: web::Data<AppData>) -> HttpResponse {
 }
 
 #[get("/books")]
-async fn get_books(app_data: web::Data<AppData>) -> HttpResponse {
-    let q = sqlx::query_as!(BookName, r#"SELECT name FROM "Book""#)
+async fn get_books(mut qp: web::Query<TranslationName2>, app_data: web::Data<AppData>) -> HttpResponse {
+    qp.sanitize();
+    if qp.translation.is_some() {
+        let t = qp.translation.clone().unwrap();
+        let q = sqlx::query_as!(BookName, r#"SELECT name from "TranslationBookName" where translation_id=(select id from "Translation" where name=$1)"#, t.to_uppercase()).fetch_all(&app_data.pool).await.unwrap();
+        let mut v = Vec::new();
+        for i in q.iter() {
+            v.push(i.name.clone());
+        }
+        return HttpResponse::Ok().json(v);
+    }
+    let q = sqlx::query_as!(BookName, r#"SELECT name FROM "Book" order by id"#)
         .fetch_all(&app_data.pool)
         .await
         .unwrap();
@@ -202,7 +228,7 @@ async fn get_books(app_data: web::Data<AppData>) -> HttpResponse {
 
 #[get("/abbreviations")]
 async fn get_abbreviations(app_data: web::Data<AppData>) -> HttpResponse {
-    let q = sqlx::query!(r#"SELECT abbreviation from "Book""#)
+    let q = sqlx::query!(r#"SELECT abbreviation from "Book" order by id"#)
         .fetch_all(&app_data.pool)
         .await
         .unwrap();
@@ -214,7 +240,7 @@ async fn get_abbreviations(app_data: web::Data<AppData>) -> HttpResponse {
 }
 
 #[get("/verses")]
-async fn get_verses(app_data: web::Data<AppData>, mut qp: web::Query<Filter>) -> HttpResponse {
+async fn get_verses(app_data: web::Data<AppData>, mut qp: web::Query<VerseFilter>) -> HttpResponse {
     qp.sanitize();
     if qp.book.is_none() && qp.abbreviation.is_none() {
         return HttpResponse::BadRequest().json(json!({
