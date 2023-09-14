@@ -3,7 +3,7 @@ use actix_web::{get, web, App, HttpResponse, HttpServer};
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 use sqlx::postgres::{PgPool, PgPoolOptions};
-use sqlx::FromRow;
+use sqlx::{FromRow, Postgres, QueryBuilder};
 use actix_cors::Cors;
 
 #[derive(Debug, Clone)]
@@ -15,8 +15,8 @@ struct AppData {
 struct Verse {
     translation: String,
     book: String,
-    regional_name: String,
-    chapter_number: i32,
+    book_name: String,
+    chapter: i32,
     verse_number: i32,
     verse: String,
 }
@@ -24,37 +24,23 @@ struct Verse {
 #[derive(Debug, Deserialize)]
 struct VerseFilter {
     translation: Option<String>,
+    tr: Option<String>,
     book: Option<String>,
+    b: Option<String>,
     abbreviation: Option<String>,
+    ab: Option<String>,
     chapter: Option<i32>,
+    ch: Option<i32>,
     startchapter: Option<i32>,
+    sch: Option<i32>,
     endchapter: Option<i32>,
+    ech: Option<i32>,
     verse: Option<i32>,
+    v: Option<i32>,
     startverse: Option<i32>,
+    sv: Option<i32>,
     endverse: Option<i32>,
-}
-
-impl VerseFilter {
-    fn sanitize(&mut self) {
-        if self.translation.is_some() {
-            let t = self.translation.clone().unwrap();
-            if t.contains("'") {
-                self.translation = None;
-            }
-        }
-        if self.book.is_some() {
-            let b = self.book.clone().unwrap();
-            if b.contains("'") {
-                self.book = None;
-            }
-        }
-        if self.abbreviation.is_some() {
-            let a = self.abbreviation.clone().unwrap();
-            if a.contains("'") {
-                self.abbreviation = None;
-            }
-        }
-    }
+    ev: Option<i32>,
 }
 
 #[derive(Debug, Serialize)]
@@ -65,17 +51,6 @@ struct TranslationName {
 #[derive(Debug, Deserialize)]
 struct TranslationName2 {
     translation: Option<String>,
-}
-
-impl TranslationName2 {
-    fn sanitize(&mut self) {
-        if self.translation.is_some() {
-            let t = self.translation.clone().unwrap();
-            if t.contains("'") {
-                self.translation = None;
-            }
-        }
-    } 
 }
 
 #[derive(Debug, Serialize)]
@@ -94,82 +69,101 @@ struct TranslationInfo {
 }
 
 #[allow(unused_assignments)]
-fn get_query(qp: web::Query<VerseFilter>) -> String {
+async fn query_verses(qp: web::Query<VerseFilter>, app_data: web::Data<AppData>) -> Vec<Verse> {
     let mut is_first = true;
-    let mut base_query = String::from(
-        r#"select t.name as translation,
-        b.name as book, b.regional_name as regional_name,
-        c.chapter_number as chapter_number, verse_number, verse
-        from "Verse" v join "Chapter" c on v.chapter_id=c.id 
-        join "Book" b on b.id=c.book_id 
-        join "Translation" t on t.id=b.translation_id"#,
-    );
-    if qp.translation.is_some() {
-        let translation_name = qp.translation.clone().unwrap().to_uppercase();
-        if is_first {
-            base_query += "\n where "
-        } else {
-            base_query += "\n and "
-        }
-        let q = format!("t.name='{translation_name}'");
-        base_query += q.as_str();
+    let mut query_builder: QueryBuilder<Postgres> = QueryBuilder::new(r#"select t.name as translation, b.name as book, tt.name as book_name, c.chapter_number as chapter, v.verse_number as verse_number, vv.verse as verse from "TranslationBookName" tt join "Book" b on tt.book_id=b.id join "Translation" t on t.id=tt.translation_id join "Chapter" c on c.book_id=b.id join "Verse" v on v.chapter_id=c.id join "VerseText" vv on v.id=vv.verse_id"#);
+    if let Some(x) = &qp.abbreviation {
+        query_builder.push(" where b.abbreviation=");
         is_first = false;
-    }
-    if qp.book.is_some() {
-        let book_name = qp.book.clone().unwrap();
+        query_builder.push_bind(x.to_uppercase());
+    }    
+    if let Some(x) = &qp.ab {
         if is_first {
-            base_query += "\n where "
+            query_builder.push(" where b.abbreviation=");
+            is_first = false;
         } else {
-            base_query += "\n and "
+            query_builder.push(" and b.abbreviation=");
         }
-        let q = format!("b.name='{book_name}'");
-        base_query += q.as_str();
-        is_first = false;
+        query_builder.push_bind(x.to_uppercase());
     }
-    if qp.abbreviation.is_some() {
-        let abbreviation = qp.abbreviation.clone().unwrap().to_uppercase();
+    if let Some(x) = &qp.book {
         if is_first {
-            base_query += "\n where "
+            query_builder.push(" where b.name=");
+            is_first = false;
         } else {
-            base_query += "\n and "
+            query_builder.push(" and b.name=");
         }
-        let q = format!("b.abbreviation='{abbreviation}'");
-        base_query += q.as_str();
-        is_first = false;
+        query_builder.push_bind(x);
     }
-    if qp.chapter.is_some() {
-        let chapter = qp.chapter.unwrap();
-        let q = format!("\n and c.chapter_number='{chapter}'");
-        base_query += q.as_str();
+    if let Some(x) = &qp.b {
+        if is_first {
+            query_builder.push(" where b.name=");
+            is_first = false;
+        } else {
+            query_builder.push(" and b.name=");
+        }
+        query_builder.push_bind(x);
     }
-    if qp.startchapter.is_some() {
-        let startchapter = qp.startchapter.unwrap();
-        let q = format!("\n and c.chapter_number>='{startchapter}'");
-        base_query += q.as_str();
+    if let Some(x) = &qp.ch {
+        query_builder.push(" and c.chapter_number=");
+        query_builder.push_bind(x);
     }
-    if qp.endchapter.is_some() {
-        let endchapter = qp.endchapter.unwrap();
-        let q = format!("\n and c.chapter_number<='{endchapter}'");
-        base_query += q.as_str();
+    if let Some(x) = &qp.chapter {
+        query_builder.push(" and c.chapter_number=");
+        query_builder.push_bind(x);
     }
-    if qp.verse.is_some() {
-        let verse = qp.verse.unwrap();
-        let q = format!("\n and v.verse_number='{verse}'");
-        base_query += q.as_str();
+    if let Some(x) = &qp.sch {
+        query_builder.push(" and c.chapter_number>=");
+        query_builder.push_bind(x);
     }
-    if qp.startverse.is_some() {
-        let startverse = qp.startverse.unwrap();
-        let q = format!("\n and v.verse_number>='{startverse}'");
-        base_query += q.as_str();
+    if let Some(x) = &qp.startchapter {
+        query_builder.push(" and c.chapter_number>=");
+        query_builder.push_bind(x);
     }
-    if qp.endverse.is_some() {
-        let endverse = qp.endverse.unwrap();
-        let q = format!("\n and v.verse_number<='{endverse}'");
-        base_query += q.as_str();
+    if let Some(x) = &qp.ech {
+        query_builder.push(" and c.chapter_number<=");
+        query_builder.push_bind(x);
     }
-    let order_query = " order by t.id,b.id,c.chapter_number,v.verse_number";
-    base_query += order_query;
-    return base_query;
+    if let Some(x) = &qp.endchapter {
+        query_builder.push(" and c.chapter_number<=");
+        query_builder.push_bind(x);
+    }
+    if let Some(x) = &qp.v {
+        query_builder.push(" and v.verse_number=");
+        query_builder.push_bind(x);
+    }
+    if let Some(x) = &qp.verse {
+        query_builder.push(" and v.verse_number=");
+        query_builder.push_bind(x);
+    }
+    if let Some(x) = &qp.sv {
+        query_builder.push(" and v.verse_number>=");
+        query_builder.push_bind(x);
+    }
+    if let Some(x) = &qp.startverse {
+        query_builder.push(" and v.verse_number>=");
+        query_builder.push_bind(x);
+    }
+    if let Some(x) = &qp.ev {
+        query_builder.push(" and v.verse_number<=");
+        query_builder.push_bind(x);
+    }
+    if let Some(x) = &qp.endverse {
+        query_builder.push(" and v.verse_number<=");
+        query_builder.push_bind(x);
+    }
+    if let Some(x) = &qp.tr {
+        query_builder.push(" and t.name=");
+        query_builder.push_bind(x.to_uppercase());
+    }
+    if let Some(x) = &qp.translation {
+        query_builder.push(" and t.name=");
+        query_builder.push_bind(x.to_uppercase());
+    }
+    query_builder.push(" order by vv.id");
+    let query = query_builder.build_query_as::<Verse>();
+    let verses = query.fetch_all(&app_data.pool).await.unwrap();
+    return verses;
 }
 
 #[get("/")]
@@ -204,8 +198,7 @@ async fn get_translations(app_data: web::Data<AppData>) -> HttpResponse {
 }
 
 #[get("/books")]
-async fn get_books(mut qp: web::Query<TranslationName2>, app_data: web::Data<AppData>) -> HttpResponse {
-    qp.sanitize();
+async fn get_books(qp: web::Query<TranslationName2>, app_data: web::Data<AppData>) -> HttpResponse {
     if qp.translation.is_some() {
         let t = qp.translation.clone().unwrap();
         let q = sqlx::query_as!(BookName, r#"SELECT name from "TranslationBookName" where translation_id=(select id from "Translation" where name=$1)"#, t.to_uppercase()).fetch_all(&app_data.pool).await.unwrap();
@@ -240,24 +233,14 @@ async fn get_abbreviations(app_data: web::Data<AppData>) -> HttpResponse {
 }
 
 #[get("/verses")]
-async fn get_verses(app_data: web::Data<AppData>, mut qp: web::Query<VerseFilter>) -> HttpResponse {
-    qp.sanitize();
-    if qp.book.is_none() && qp.abbreviation.is_none() {
+async fn get_verses(app_data: web::Data<AppData>, qp: web::Query<VerseFilter>) -> HttpResponse {
+    if qp.book.is_none() && qp.abbreviation.is_none() && qp.ab.is_none() {
         return HttpResponse::BadRequest().json(json!({
             "message": "Either one of book or abbreviation parameters is required"
         }));
     }
-    let query = get_query(qp);
-    let verses_result = sqlx::query_as::<_, Verse>(query.as_str())
-        .fetch_all(&app_data.pool)
-        .await;
-
-    if verses_result.is_err() {
-        return HttpResponse::InternalServerError()
-            .json(json!({"message": "Something wrong with the query"}));
-    }
-    let verses = verses_result.unwrap();
-    HttpResponse::Ok().json(&verses)
+    let query = query_verses(qp, app_data).await;
+    return HttpResponse::Ok().json(query);
 }
 
 #[tokio::main]
