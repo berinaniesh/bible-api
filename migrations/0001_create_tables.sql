@@ -60,14 +60,14 @@ CREATE TABLE "Chapter" (
 CREATE TABLE "Verse" (
   "id" SERIAL PRIMARY KEY,
   "chapter_id" integer NOT NULL,
-  "verse_number" integer NOT NULL,
+  "verse_number" integer NOT NULL
 );
 
 CREATE TABLE "VerseText" (
   "id" SERIAL PRIMARY KEY,
   "translation_id" integer NOT NULL,
   "verse_id" integer NOT NULL,
-  "verse" varchar NOT NULL,
+  "verse" varchar NOT NULL
 );
 
 ALTER TABLE "Translation" ADD FOREIGN KEY ("language_id") REFERENCES "Language" ("id") ON DELETE CASCADE ON UPDATE CASCADE;
