@@ -11,6 +11,6 @@ Right now, the following translations are available.
 1. Tamil Old Version - TOVBSI (1957)
 2. King James Version - KJV (1769) - WIP
 
-## Source
+## Sources
 1. [TOVBSI](https://github.com/berinaniesh/bible-tamil)
 2. KJV - Yet to be published
