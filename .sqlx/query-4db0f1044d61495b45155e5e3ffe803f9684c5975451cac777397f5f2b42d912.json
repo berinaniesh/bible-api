@@ -1,0 +1,20 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT abbreviation from \"Book\"",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "abbreviation",
+        "type_info": "Varchar"
+      }
+    ],
+    "parameters": {
+      "Left": []
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "4db0f1044d61495b45155e5e3ffe803f9684c5975451cac777397f5f2b42d912"
+}

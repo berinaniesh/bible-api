@@ -1,9 +1,8 @@
 # Bible API
 
 This repository contains the backend code to serve bible verses over REST endpoints.
-We aim to make the API as open as possible.
-So, only Bible translations available in the public domain (or any free license)
-are available.
+We aim to make the API and the source code as open as possible.
+So, only Bible translations available in the public domain are available.
 
 ## Translations
 
