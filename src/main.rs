@@ -56,9 +56,19 @@ impl Filter {
     }
 }
 
-#[derive(Serialize)]
+#[derive(Debug, Serialize)]
 struct Translation {
     name: String,
+}
+
+#[derive(Debug, Serialize, FromRow)]
+struct TranslationInfo {
+    name: String,
+    language: String,
+    full_name: Option<String>,
+    year: Option<String>,
+    license: Option<String>,
+    description: Option<String>,
 }
 
 #[allow(unused_assignments)]
@@ -155,12 +165,19 @@ async fn home(app_data: web::Data<AppData>) -> HttpResponse {
         json!({
             "About": "REST API to serve bible verses",
             "TranslationsAvailable": translations,
-            "Endpoint": "/verses",
+            "InfoAboutTranslations": "/translations",
+            "VersesEndpoint": "/verses",
             "ParametersAvailable": ["translation", "book", "abbreviation", "chapter", "startchapter", "endchapter", "verse", "startverse", "endverse"],
-            "Example": "/verses?translation=TOVBSI&book=1+Samuel&abbreviation=1SA&startchapter=1&endchapter=3&startverse=1&endverse=20",
+            "Example": "/verses?translation=tovbsi&book=1+Samuel&abbreviation=1SA&chapter=1&verse=10",
             "abbreviations": "/abbreviations"
         }),
     )
+}
+
+#[get("/translations")]
+async fn get_translations(app_data: web::Data<AppData>) -> HttpResponse {
+    let q = sqlx::query_as!(TranslationInfo, r#"SELECT name, l.lname as language, full_name, year, license, description from "Translation" join (select id, name as lname from "Language") l on l.id=language_id"#).fetch_all(&app_data.pool).await.unwrap();
+    return HttpResponse::Ok().json(q);
 }
 
 #[get("/abbreviations")]
@@ -211,6 +228,7 @@ async fn main() -> std::io::Result<()> {
             .service(home)
             .service(get_verses)
             .service(get_abbreviations)
+            .service(get_translations)
     })
     .bind(("127.0.0.1", 7000))?;
     return server.run().await;
