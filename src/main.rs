@@ -165,6 +165,7 @@ async fn home(app_data: web::Data<AppData>) -> HttpResponse {
     HttpResponse::Ok().json(
         json!({
             "About": "REST API to serve bible verses",
+            "Repository": "https://github.com/berinaniesh/bible-api",
             "TranslationsAvailable": translations,
             "InfoAboutTranslations": "/translations",
             "VersesEndpoint": "/verses",
