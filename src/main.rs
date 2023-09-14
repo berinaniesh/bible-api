@@ -31,6 +31,29 @@ struct Filter {
     endverse: Option<i32>
 }
 
+impl Filter {
+    fn sanitize(&mut self) {
+        if self.translation.is_some() {
+            let t = self.translation.clone().unwrap();
+            if t.contains("'") {
+                self.translation = None;
+            }
+        }
+        if self.book.is_some() {
+            let b = self.book.clone().unwrap();
+            if b.contains("'") {
+                self.book = None;
+            }
+        }
+        if self.abbreviation.is_some() {
+            let a = self.abbreviation.clone().unwrap();
+            if a.contains("'") {
+                self.abbreviation = None;
+            }
+        }
+    }
+}
+
 #[derive(Serialize)]
 struct Translation {
     name: String,
@@ -126,7 +149,6 @@ fn get_query(qp: web::Query<Filter>) -> String {
     }
     let order_query = " order by t.id,b.id,c.chapter_number,v.verse_number";
     base_query += order_query;
-    println!("{}", &base_query);
     return base_query;
 }
 
@@ -164,7 +186,8 @@ async fn get_abbreviations(app_data: web::Data<AppData>) -> HttpResponse {
 }
 
 #[get("/verses")]
-async fn get_verses(app_data: web::Data<AppData>, qp: web::Query<Filter>) -> HttpResponse {
+async fn get_verses(app_data: web::Data<AppData>, mut qp: web::Query<Filter>) -> HttpResponse {
+    qp.sanitize(); 
     let query = get_query(qp);
     let verses_result = sqlx::query_as::<_, Verse>(
         query.as_str()
