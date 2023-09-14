@@ -181,12 +181,10 @@ async fn home(app_data: web::Data<AppData>) -> HttpResponse {
         json!({
             "About": "REST API to serve bible verses",
             "Repository": "https://github.com/berinaniesh/bible-api",
-            "TranslationsAvailable": translations,
-            "InfoAboutTranslations": "/translations",
-            "VersesEndpoint": "/verses",
-            "ParametersAvailable": ["translation or tr", "book or b", "abbreviation or ab", "chapter or ch", "startchapter or sch", "endchapter or ech", "verse or v", "startverse or sv", "endverse or ev"],
-            "Example": "/verses?translation=tovbsi&book=1+Samuel&abbreviation=1SA&chapter=1&verse=10",
-            "abbreviations": "/abbreviations"
+            "Endpoints": ["/translations", "/verses", "/abbreviations", "/books"],
+            "ParametersForVerses": ["translation or tr", "book or b", "abbreviation or ab", "chapter or ch", "startchapter or sch", "endchapter or ech", "verse or v", "startverse or sv", "endverse or ev"],
+            "ParametersForBooks": ["translation"],
+            "Examples": ["/verses?translation=tovbsi&book=1+Samuel&abbreviation=1SA&chapter=1&verse=10", "/verses?tr=kjv&ab=jhn&ch=1&v=1"]
         }),
     )
 }
