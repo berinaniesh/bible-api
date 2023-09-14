@@ -4,6 +4,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::json;
 use sqlx::postgres::{PgPool, PgPoolOptions};
 use sqlx::FromRow;
+use actix_cors::Cors;
 
 #[derive(Debug, Clone)]
 struct AppData {
@@ -223,6 +224,7 @@ async fn main() -> std::io::Result<()> {
     env_logger::init();
     let server = HttpServer::new(move || {
         App::new()
+            .wrap(Cors::permissive())
             .wrap(Logger::default())
             .app_data(web::Data::new(app_data.clone()))
             .service(home)
