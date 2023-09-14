@@ -46,8 +46,8 @@ CREATE TABLE "TranslationBookName" (
   "id" SERIAL PRIMARY KEY,
   "translation_id" integer NOT NULL,
   "book_id" integer NOT NULL,
-  "regional_name" varchar NOT NULL,
-  "regional_long_name" varchar
+  "name" varchar NOT NULL,
+  "long_name" varchar
 );
 
 CREATE TABLE "Chapter" (
