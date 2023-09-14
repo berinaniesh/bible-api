@@ -58,7 +58,12 @@ impl Filter {
 }
 
 #[derive(Debug, Serialize)]
-struct Translation {
+struct TranslationName {
+    name: String,
+}
+
+#[derive(Debug, Serialize)]
+struct BookName {
     name: String,
 }
 
@@ -153,7 +158,7 @@ fn get_query(qp: web::Query<Filter>) -> String {
 
 #[get("/")]
 async fn home(app_data: web::Data<AppData>) -> HttpResponse {
-    let t = sqlx::query_as!(Translation, r#"SELECT name from "Translation""#)
+    let t = sqlx::query_as!(TranslationName, r#"SELECT name from "Translation""#)
         .fetch_all(&app_data.pool)
         .await
         .unwrap();
@@ -180,6 +185,19 @@ async fn home(app_data: web::Data<AppData>) -> HttpResponse {
 async fn get_translations(app_data: web::Data<AppData>) -> HttpResponse {
     let q = sqlx::query_as!(TranslationInfo, r#"SELECT name, l.lname as language, full_name, year, license, description from "Translation" join (select id, name as lname from "Language") l on l.id=language_id"#).fetch_all(&app_data.pool).await.unwrap();
     return HttpResponse::Ok().json(q);
+}
+
+#[get("/books")]
+async fn get_books(app_data: web::Data<AppData>) -> HttpResponse {
+    let q = sqlx::query_as!(BookName, r#"SELECT name FROM "Book""#)
+        .fetch_all(&app_data.pool)
+        .await
+        .unwrap();
+    let mut v = Vec::new();
+    for i in q.iter() {
+        v.push(i.name.clone());
+    }
+    return HttpResponse::Ok().json(v);
 }
 
 #[get("/abbreviations")]
@@ -232,6 +250,7 @@ async fn main() -> std::io::Result<()> {
             .service(get_verses)
             .service(get_abbreviations)
             .service(get_translations)
+            .service(get_books)
     })
     .bind(("127.0.0.1", 7000))?;
     return server.run().await;

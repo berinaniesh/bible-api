@@ -42,9 +42,9 @@ CREATE TABLE "Book" (
   "description" text
 );
 
-CREATE TABLE "RegionalName" (
+CREATE TABLE "TranslationBookName" (
   "id" SERIAL PRIMARY KEY,
-  "language_id" integer NOT NULL,
+  "translation_id" integer NOT NULL,
   "book_id" integer NOT NULL,
   "regional_name" varchar NOT NULL,
   "regional_long_name" varchar
@@ -72,9 +72,9 @@ CREATE TABLE "VerseText" (
 
 ALTER TABLE "Translation" ADD FOREIGN KEY ("language_id") REFERENCES "Language" ("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
-ALTER TABLE "RegionalName" ADD FOREIGN KEY ("language_id") REFERENCES "Language" ("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "TranslationBookName" ADD FOREIGN KEY ("translation_id") REFERENCES "Translation" ("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
-ALTER TABLE "RegionalName" ADD FOREIGN KEY ("book_id") REFERENCES "Book" ("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "TranslationBookName" ADD FOREIGN KEY ("book_id") REFERENCES "Book" ("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 ALTER TABLE "Chapter" ADD FOREIGN KEY ("book_id") REFERENCES "Book" ("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
