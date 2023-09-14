@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "SELECT name from \"Translation\"",
+  "query": "SELECT name from \"Translation\" order by id",
   "describe": {
     "columns": [
       {
@@ -16,5 +16,5 @@
       false
     ]
   },
-  "hash": "6f75637db698c776d4dde3936b6836c5a25eb24e57efc3758a9385910b43ef25"
+  "hash": "11e824bbdd38f855b46b71576374e3962dea255c6417aa3a9839c1122f661c36"
 }

@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "SELECT abbreviation from \"Book\"",
+  "query": "SELECT abbreviation from \"Book\" order by id",
   "describe": {
     "columns": [
       {
@@ -13,8 +13,8 @@
       "Left": []
     },
     "nullable": [
-      false
+      true
     ]
   },
-  "hash": "4db0f1044d61495b45155e5e3ffe803f9684c5975451cac777397f5f2b42d912"
+  "hash": "15bdd7d8b8dba50166fc24769572b1168bac1c66ff8dde1bfa3e5387e1137bcd"
 }
