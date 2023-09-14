@@ -184,7 +184,7 @@ async fn home(app_data: web::Data<AppData>) -> HttpResponse {
             "TranslationsAvailable": translations,
             "InfoAboutTranslations": "/translations",
             "VersesEndpoint": "/verses",
-            "ParametersAvailable": ["translation", "book", "abbreviation", "chapter", "startchapter", "endchapter", "verse", "startverse", "endverse"],
+            "ParametersAvailable": ["translation or tr", "book or b", "abbreviation or ab", "chapter or ch", "startchapter or sch", "endchapter or ech", "verse or v", "startverse or sv", "endverse or ev"],
             "Example": "/verses?translation=tovbsi&book=1+Samuel&abbreviation=1SA&chapter=1&verse=10",
             "abbreviations": "/abbreviations"
         }),
