@@ -33,16 +33,21 @@ CREATE TABLE "Translation" (
 
 CREATE TABLE "Book" (
   "id" SERIAL PRIMARY KEY,
-  "translation_id" integer NOT NULL,
   "name" varchar NOT NULL,
   "long_name" varchar NOT NULL,
-  "regional_name" varchar,
-  "regional_long_name" varchar,
   "book_number" integer NOT NULL,
   "abbreviation" varchar,
   "testament" "Testament",
   "division" "Division",
   "description" text
+);
+
+CREATE TABLE "RegionalName" (
+  "id" SERIAL PRIMARY KEY,
+  "language_id" integer NOT NULL,
+  "book_id" integer NOT NULL,
+  "regional_name" varchar NOT NULL,
+  "regional_long_name" varchar
 );
 
 CREATE TABLE "Chapter" (
@@ -56,13 +61,26 @@ CREATE TABLE "Verse" (
   "id" SERIAL PRIMARY KEY,
   "chapter_id" integer NOT NULL,
   "verse_number" integer NOT NULL,
-  "verse" varchar NOT NULL
+);
+
+CREATE TABLE "VerseText" (
+  "id" SERIAL PRIMARY KEY,
+  "translation_id" integer NOT NULL,
+  "verse_id" integer NOT NULL,
+  "verse" varchar NOT NULL,
 );
 
 ALTER TABLE "Translation" ADD FOREIGN KEY ("language_id") REFERENCES "Language" ("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
-ALTER TABLE "Book" ADD FOREIGN KEY ("translation_id") REFERENCES "Translation" ("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "RegionalName" ADD FOREIGN KEY ("language_id") REFERENCES "Language" ("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+ALTER TABLE "RegionalName" ADD FOREIGN KEY ("book_id") REFERENCES "Book" ("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 ALTER TABLE "Chapter" ADD FOREIGN KEY ("book_id") REFERENCES "Book" ("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 ALTER TABLE "Verse" ADD FOREIGN KEY ("chapter_id") REFERENCES "Chapter" ("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+ALTER TABLE "VerseText" ADD FOREIGN KEY ("translation_id") REFERENCES "Translation" ("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+ALTER TABLE "VerseText" ADD FOREIGN KEY ("verse_id") REFERENCES "Verse" ("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
