@@ -14,7 +14,6 @@ struct AppData {
 struct Verse {
     translation: String,
     book: String,
-    abbreviation: String,
     regional_name: String,
     chapter_number: i32,
     verse_number: i32,
@@ -42,8 +41,7 @@ fn get_query(qp: web::Query<Filter>) -> String {
     let mut is_first = true;
     let mut base_query = String::from(
         r#"select t.name as translation,
-        b.name as book, b.abbreviation as abbreviation,
-        b.regional_name as regional_name,
+        b.name as book, b.regional_name as regional_name,
         c.chapter_number as chapter_number, verse_number, verse
         from "Verse" v join "Chapter" c on v.chapter_id=c.id 
         join "Book" b on b.id=c.book_id 
@@ -128,6 +126,7 @@ fn get_query(qp: web::Query<Filter>) -> String {
     }
     let order_query = " order by t.id,b.id,c.chapter_number,v.verse_number";
     base_query += order_query;
+    println!("{}", &base_query);
     return base_query;
 }
 
@@ -148,9 +147,20 @@ async fn home(app_data: web::Data<AppData>) -> HttpResponse {
             "TranslationsAvailable": translations,
             "Endpoint": "/verses",
             "Hint": "Make sure to use query parameters to restrict the number of verses fetched",
-            "Example": "/verses?translation=TOVBSI&book=1+Samuel&abbreviation=1SA&startchapter=1&endchapter=3&startverse=1&endverse=20"
+            "Example": "/verses?translation=TOVBSI&book=1+Samuel&abbreviation=1SA&startchapter=1&endchapter=3&startverse=1&endverse=20",
+            "abbreviations": "/abbreviations"
         }),
     )
+}
+
+#[get("/abbreviations")]
+async fn get_abbreviations(app_data: web::Data<AppData>) -> HttpResponse {
+    let q = sqlx::query!(r#"SELECT abbreviation from "Book""#).fetch_all(&app_data.pool).await.unwrap();
+    let mut v = Vec::new();
+    for i in q {
+        v.push(i.abbreviation.clone());
+    }
+    return HttpResponse::Ok().json(v);
 }
 
 #[get("/verses")]
@@ -174,7 +184,7 @@ async fn main() -> std::io::Result<()> {
     let db_url = dotenvy::var("DATABASE_URL").unwrap();
     let pool = PgPoolOptions::new().connect(db_url.as_str()).await.unwrap();
     let app_data = AppData { pool };
-    std::env::set_var("RUST_LOG", "warn");
+    std::env::set_var("RUST_LOG", "info");
     env_logger::init();
     let server = HttpServer::new(move || {
         App::new()
@@ -182,6 +192,7 @@ async fn main() -> std::io::Result<()> {
             .app_data(web::Data::new(app_data.clone()))
             .service(home)
             .service(get_verses)
+            .service(get_abbreviations)
     })
     .bind(("127.0.0.1", 7000))?;
     return server.run().await;
