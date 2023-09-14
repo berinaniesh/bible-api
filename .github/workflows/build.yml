@@ -11,11 +11,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - run: rustup update stable && rustup default stable
-      - run: cargo build --release
       - name: SSH
-        run: |
-          install -m 600 -D /dev/null ~/.ssh/id_ed25519
-          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
-          ssh-keyscan -H tncars.pp.ua > ~/.ssh/known_hosts
-        run: scp target/release/bible-api berinaniesh@tncars.pp.ua:/home/berinaniesh/tmp/bible-api
+          run: rustup update stable && rustup default stable
+          run: cargo build --release
+          run: |
+            install -m 600 -D /dev/null ~/.ssh/id_ed25519
+            echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
+            ssh-keyscan -H tncars.pp.ua > ~/.ssh/known_hosts
+          run: scp target/release/bible-api berinaniesh@tncars.pp.ua:/home/berinaniesh/tmp/bible-api
