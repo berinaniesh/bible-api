@@ -1,6 +1,6 @@
 use actix_web::middleware::Logger;
 use actix_web::{get, web, App, HttpResponse, HttpServer};
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 use serde_json::json;
 use sqlx::postgres::{PgPool, PgPoolOptions};
 use sqlx::FromRow;
@@ -25,10 +25,12 @@ struct Filter {
     translation: Option<String>,
     book: Option<String>,
     abbreviation: Option<String>,
+    chapter: Option<i32>,
     startchapter: Option<i32>,
     endchapter: Option<i32>,
+    verse: Option<i32>,
     startverse: Option<i32>,
-    endverse: Option<i32>
+    endverse: Option<i32>,
 }
 
 impl Filter {
@@ -68,10 +70,10 @@ fn get_query(qp: web::Query<Filter>) -> String {
         c.chapter_number as chapter_number, verse_number, verse
         from "Verse" v join "Chapter" c on v.chapter_id=c.id 
         join "Book" b on b.id=c.book_id 
-        join "Translation" t on t.id=b.translation_id"#
-        );
+        join "Translation" t on t.id=b.translation_id"#,
+    );
     if qp.translation.is_some() {
-        let translation_name = qp.translation.clone().unwrap();
+        let translation_name = qp.translation.clone().unwrap().to_uppercase();
         if is_first {
             base_query += "\n where "
         } else {
@@ -103,49 +105,35 @@ fn get_query(qp: web::Query<Filter>) -> String {
         base_query += q.as_str();
         is_first = false;
     }
-    if qp.startchapter.is_some() {
-        let startchapter=qp.startchapter.unwrap();
-        if is_first {
-            base_query += "\n where "
-        } else {
-            base_query += "\n and "
-        }
-        let q = format!("c.chapter_number>='{startchapter}'");
+    if qp.chapter.is_some() {
+        let chapter = qp.chapter.unwrap();
+        let q = format!("\n and c.chapter_number='{chapter}'");
         base_query += q.as_str();
-        is_first = false;
+    }
+    if qp.startchapter.is_some() {
+        let startchapter = qp.startchapter.unwrap();
+        let q = format!("\n and c.chapter_number>='{startchapter}'");
+        base_query += q.as_str();
     }
     if qp.endchapter.is_some() {
-        let endchapter=qp.endchapter.unwrap();
-        if is_first {
-            base_query += "\n where "
-        } else {
-            base_query += "\n and "
-        }
-        let q = format!("c.chapter_number<='{endchapter}'");
+        let endchapter = qp.endchapter.unwrap();
+        let q = format!("\n and c.chapter_number<='{endchapter}'");
         base_query += q.as_str();
-        is_first = false;
+    }
+    if qp.verse.is_some() {
+        let verse = qp.verse.unwrap();
+        let q = format!("\n and v.verse_number='{verse}'");
+        base_query += q.as_str();
     }
     if qp.startverse.is_some() {
-        let startverse=qp.startverse.unwrap();
-        if is_first {
-            base_query += "\n where "
-        } else {
-            base_query += "\n and "
-        }
-        let q = format!("v.verse_number>='{startverse}'");
+        let startverse = qp.startverse.unwrap();
+        let q = format!("\n and v.verse_number>='{startverse}'");
         base_query += q.as_str();
-        is_first = false;
     }
     if qp.endverse.is_some() {
-        let endverse=qp.endverse.unwrap();
-        if is_first {
-            base_query += "\n where "
-        } else {
-            base_query += "\n and "
-        }
-        let q = format!("v.verse_number<='{endverse}'");
+        let endverse = qp.endverse.unwrap();
+        let q = format!("\n and v.verse_number<='{endverse}'");
         base_query += q.as_str();
-        is_first = false;
     }
     let order_query = " order by t.id,b.id,c.chapter_number,v.verse_number";
     base_query += order_query;
@@ -168,7 +156,7 @@ async fn home(app_data: web::Data<AppData>) -> HttpResponse {
             "About": "REST API to serve bible verses",
             "TranslationsAvailable": translations,
             "Endpoint": "/verses",
-            "Hint": "Make sure to use query parameters to restrict the number of verses fetched",
+            "ParametersAvailable": ["translation", "book", "abbreviation", "chapter", "startchapter", "endchapter", "verse", "startverse", "endverse"],
             "Example": "/verses?translation=TOVBSI&book=1+Samuel&abbreviation=1SA&startchapter=1&endchapter=3&startverse=1&endverse=20",
             "abbreviations": "/abbreviations"
         }),
@@ -177,7 +165,10 @@ async fn home(app_data: web::Data<AppData>) -> HttpResponse {
 
 #[get("/abbreviations")]
 async fn get_abbreviations(app_data: web::Data<AppData>) -> HttpResponse {
-    let q = sqlx::query!(r#"SELECT abbreviation from "Book""#).fetch_all(&app_data.pool).await.unwrap();
+    let q = sqlx::query!(r#"SELECT abbreviation from "Book""#)
+        .fetch_all(&app_data.pool)
+        .await
+        .unwrap();
     let mut v = Vec::new();
     for i in q {
         v.push(i.abbreviation.clone());
@@ -187,16 +178,20 @@ async fn get_abbreviations(app_data: web::Data<AppData>) -> HttpResponse {
 
 #[get("/verses")]
 async fn get_verses(app_data: web::Data<AppData>, mut qp: web::Query<Filter>) -> HttpResponse {
-    qp.sanitize(); 
+    qp.sanitize();
+    if qp.book.is_none() && qp.abbreviation.is_none() {
+        return HttpResponse::BadRequest().json(json!({
+            "message": "Either one of book or abbreviation parameters is required"
+        }));
+    }
     let query = get_query(qp);
-    let verses_result = sqlx::query_as::<_, Verse>(
-        query.as_str()
-    )
-    .fetch_all(&app_data.pool)
-    .await;
+    let verses_result = sqlx::query_as::<_, Verse>(query.as_str())
+        .fetch_all(&app_data.pool)
+        .await;
 
     if verses_result.is_err() {
-        return HttpResponse::InternalServerError().json(json!({"message": "Something wrong with the query"}));
+        return HttpResponse::InternalServerError()
+            .json(json!({"message": "Something wrong with the query"}));
     }
     let verses = verses_result.unwrap();
     HttpResponse::Ok().json(&verses)
