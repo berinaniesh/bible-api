@@ -71,7 +71,8 @@ struct TranslationInfo {
 #[allow(unused_assignments)]
 async fn query_verses(qp: web::Query<VerseFilter>, app_data: web::Data<AppData>) -> Vec<Verse> {
     let mut is_first = true;
-    let mut query_builder: QueryBuilder<Postgres> = QueryBuilder::new(r#"select t.name as translation, b.name as book, tt.name as book_name, c.chapter_number as chapter, v.verse_number as verse_number, vv.verse as verse from "TranslationBookName" tt join "Book" b on tt.book_id=b.id join "Translation" t on t.id=tt.translation_id join "Chapter" c on c.book_id=b.id join "Verse" v on v.chapter_id=c.id join "VerseText" vv on v.id=vv.verse_id"#);
+    let mut query_builder: QueryBuilder<Postgres> = QueryBuilder::new(r#"select t.name as translation, b.name as book, tt.name as book_name, c.chapter_number as chapter, v.verse_number as verse_number, verse from "VerseText" vv join "Translation" t on vv.translation_id=t.id join "Verse" v on v.id=vv.verse_id join "Chapter" c on v.chapter_id=c.id join "Book" b on c.book_id=b.id join "TranslationBookName" tt on (t.id=tt.translation_id and b.id=tt.book_id)"#);
+
     if let Some(x) = &qp.abbreviation {
         query_builder.push(" where b.abbreviation=");
         is_first = false;

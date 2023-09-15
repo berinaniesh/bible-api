@@ -8,13 +8,11 @@ So, only Bible translations that are in the public domain are included.
 
 At the moment, the following translations are available.
 
-| Sl. No | Translation                | Language | Year |
-| ------ | -------------------------- | -------- | ---- |
-| 1.     | Tamil Old Version (TOVBSI) | Tamil    | 1957 |
+| Sl. No | Translation                | Language | Year               |
+| ------ | -------------------------- | -------- | ------------------ |
+| 1.     | Tamil Old Version (TOVBSI) | Tamil    | 1957               |
+| 2.     | King James Version (KJV)   | English  | 1611, revised 1769 |
 
-## WIP
-
-1. King James Version - KJV (1769)
 
 ## Sources
 
