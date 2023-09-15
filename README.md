@@ -19,7 +19,7 @@ At the moment, the following translations are available.
 ## Sources
 
 1. [TOVBSI](https://github.com/berinaniesh/bible-tamil)
-2. [KJV](https://github.com/aruljohn/Bible-kjv)
+2. [KJV](https://github.com/berinaniesh/bible-kjv)
 
 ## Bible requests
 
