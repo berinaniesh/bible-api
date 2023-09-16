@@ -217,6 +217,12 @@ async fn get_books(qp: web::Query<TranslationName2>, app_data: web::Data<AppData
         for i in 39..66 {
             nt.push(q[i].name.clone());
         }
+    } else {
+        return HttpResponse::BadRequest().json(
+            json!({
+                "message": "Not all books were fetched, check if the translation name is correct"
+            })
+        );
     }
     return HttpResponse::Ok().json(
         json!({
