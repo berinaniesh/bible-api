@@ -247,7 +247,7 @@ async fn get_abbreviations(app_data: web::Data<AppData>) -> HttpResponse {
 
 #[get("/verses")]
 async fn get_verses(app_data: web::Data<AppData>, qp: web::Query<VerseFilter>) -> HttpResponse {
-    if qp.book.is_none() && qp.abbreviation.is_none() && qp.ab.is_none() {
+    if qp.book.is_none() && qp.b.is_none() && qp.abbreviation.is_none() && qp.ab.is_none() {
         return HttpResponse::BadRequest().json(json!({
             "message": "Either one of book or abbreviation parameters is required"
         }));
