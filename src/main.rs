@@ -198,24 +198,32 @@ async fn get_translations(app_data: web::Data<AppData>) -> HttpResponse {
 
 #[get("/books")]
 async fn get_books(qp: web::Query<TranslationName2>, app_data: web::Data<AppData>) -> HttpResponse {
+    let mut ot = Vec::new();
+    let mut nt = Vec::new();
+    let q;
     if qp.translation.is_some() {
         let t = qp.translation.clone().unwrap();
-        let q = sqlx::query_as!(BookName, r#"SELECT name from "TranslationBookName" where translation_id=(select id from "Translation" where name=$1)"#, t.to_uppercase()).fetch_all(&app_data.pool).await.unwrap();
-        let mut v = Vec::new();
-        for i in q.iter() {
-            v.push(i.name.clone());
-        }
-        return HttpResponse::Ok().json(v);
-    }
-    let q = sqlx::query_as!(BookName, r#"SELECT name FROM "Book" order by id"#)
+        q = sqlx::query_as!(BookName, r#"SELECT name from "TranslationBookName" where translation_id=(select id from "Translation" where name=$1)"#, t.to_uppercase()).fetch_all(&app_data.pool).await.unwrap();
+    } else {
+        q = sqlx::query_as!(BookName, r#"SELECT name FROM "Book" order by id"#)
         .fetch_all(&app_data.pool)
         .await
         .unwrap();
-    let mut v = Vec::new();
-    for i in q.iter() {
-        v.push(i.name.clone());
     }
-    return HttpResponse::Ok().json(v);
+    if q.len() == 66 { 
+        for i in 0..39 {
+            ot.push(q[i].name.clone());
+        }
+        for i in 39..66 {
+            nt.push(q[i].name.clone());
+        }
+    }
+    return HttpResponse::Ok().json(
+        json!({
+            "Old Testament": ot,
+            "New Testament": nt,
+        })
+    );
 }
 
 #[get("/abbreviations")]
