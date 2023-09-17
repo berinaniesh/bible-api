@@ -1,10 +1,10 @@
+use actix_cors::Cors;
 use actix_web::middleware::Logger;
 use actix_web::{get, web, App, HttpResponse, HttpServer};
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 use sqlx::postgres::{PgPool, PgPoolOptions};
 use sqlx::{FromRow, Postgres, QueryBuilder};
-use actix_cors::Cors;
 
 #[derive(Debug, Clone)]
 struct AppData {
@@ -68,16 +68,23 @@ struct TranslationInfo {
     description: Option<String>,
 }
 
+#[derive(Debug, Serialize, FromRow)]
+struct Count {
+    count: i64,
+}
+
 #[allow(unused_assignments)]
 async fn query_verses(qp: web::Query<VerseFilter>, app_data: web::Data<AppData>) -> Vec<Verse> {
     let mut is_first = true;
-    let mut query_builder: QueryBuilder<Postgres> = QueryBuilder::new(r#"select t.name as translation, b.name as book, tt.name as book_name, c.chapter_number as chapter, v.verse_number as verse_number, verse from "VerseText" vv join "Translation" t on vv.translation_id=t.id join "Verse" v on v.id=vv.verse_id join "Chapter" c on v.chapter_id=c.id join "Book" b on c.book_id=b.id join "TranslationBookName" tt on (t.id=tt.translation_id and b.id=tt.book_id)"#);
+    let mut query_builder: QueryBuilder<Postgres> = QueryBuilder::new(
+        r#"select t.name as translation, b.name as book, tt.name as book_name, c.chapter_number as chapter, v.verse_number as verse_number, verse from "VerseText" vv join "Translation" t on vv.translation_id=t.id join "Verse" v on v.id=vv.verse_id join "Chapter" c on v.chapter_id=c.id join "Book" b on c.book_id=b.id join "TranslationBookName" tt on (t.id=tt.translation_id and b.id=tt.book_id)"#,
+    );
 
     if let Some(x) = &qp.abbreviation {
         query_builder.push(" where b.abbreviation=");
         is_first = false;
         query_builder.push_bind(x.to_uppercase());
-    }    
+    }
     if let Some(x) = &qp.ab {
         if is_first {
             query_builder.push(" where b.abbreviation=");
@@ -169,10 +176,13 @@ async fn query_verses(qp: web::Query<VerseFilter>, app_data: web::Data<AppData>)
 
 #[get("/")]
 async fn home(app_data: web::Data<AppData>) -> HttpResponse {
-    let t = sqlx::query_as!(TranslationName, r#"SELECT name from "Translation" order by id"#)
-        .fetch_all(&app_data.pool)
-        .await
-        .unwrap();
+    let t = sqlx::query_as!(
+        TranslationName,
+        r#"SELECT name from "Translation" order by id"#
+    )
+    .fetch_all(&app_data.pool)
+    .await
+    .unwrap();
     let mut translations: Vec<String> = Vec::new();
     for i in t.iter() {
         translations.push(i.name.clone());
@@ -206,11 +216,11 @@ async fn get_books(qp: web::Query<TranslationName2>, app_data: web::Data<AppData
         q = sqlx::query_as!(BookName, r#"SELECT name from "TranslationBookName" where translation_id=(select id from "Translation" where name=$1)"#, t.to_uppercase()).fetch_all(&app_data.pool).await.unwrap();
     } else {
         q = sqlx::query_as!(BookName, r#"SELECT name FROM "Book" order by id"#)
-        .fetch_all(&app_data.pool)
-        .await
-        .unwrap();
+            .fetch_all(&app_data.pool)
+            .await
+            .unwrap();
     }
-    if q.len() == 66 { 
+    if q.len() == 66 {
         for i in 0..39 {
             ot.push(q[i].name.clone());
         }
@@ -218,18 +228,14 @@ async fn get_books(qp: web::Query<TranslationName2>, app_data: web::Data<AppData
             nt.push(q[i].name.clone());
         }
     } else {
-        return HttpResponse::BadRequest().json(
-            json!({
-                "message": "Not all books were fetched, check if the translation name is correct"
-            })
-        );
+        return HttpResponse::BadRequest().json(json!({
+            "message": "Not all books were fetched, check if the translation name is correct"
+        }));
     }
-    return HttpResponse::Ok().json(
-        json!({
-            "Old Testament": ot,
-            "New Testament": nt,
-        })
-    );
+    return HttpResponse::Ok().json(json!({
+        "Old Testament": ot,
+        "New Testament": nt,
+    }));
 }
 
 #[get("/abbreviations")]
@@ -256,6 +262,19 @@ async fn get_verses(app_data: web::Data<AppData>, qp: web::Query<VerseFilter>) -
     return HttpResponse::Ok().json(query);
 }
 
+#[get("/chaptercount/{book}")]
+async fn get_chaptercount(app_data: web::Data<AppData>, path: web::Path<String>) -> HttpResponse {
+    let book= path.into_inner();
+    let mut query_builder: QueryBuilder<Postgres> = QueryBuilder::new(r#"SELECT COUNT(*) AS count FROM "Chapter" WHERE book_id=(SELECT id FROM "Book" WHERE name="#);
+    query_builder.push_bind(book);
+    query_builder.push(")");
+    let query = query_builder.build_query_as::<Count>();
+    let count_res = query.fetch_one(&app_data.pool).await.unwrap();
+    return HttpResponse::Ok().json(json!({
+        "count": count_res.count
+    }));
+}
+
 #[tokio::main]
 async fn main() -> std::io::Result<()> {
     let db_url = dotenvy::var("DATABASE_URL").unwrap();
@@ -273,6 +292,7 @@ async fn main() -> std::io::Result<()> {
             .service(get_abbreviations)
             .service(get_translations)
             .service(get_books)
+            .service(get_chaptercount)
     })
     .bind(("127.0.0.1", 7000))?;
     return server.run().await;
