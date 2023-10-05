@@ -51,6 +51,7 @@ struct TranslationName {
 #[derive(Debug, Deserialize)]
 struct TranslationName2 {
     translation: Option<String>,
+    tr: Option<String>,
 }
 
 #[derive(Debug, Serialize)]
@@ -69,8 +70,23 @@ struct TranslationInfo {
 }
 
 #[derive(Debug, Serialize, FromRow)]
+struct TranslationBook {
+    book_number: i32,
+    book_name: String,
+
+}
+
+#[derive(Debug, Serialize, FromRow)]
 struct Count {
     count: i64,
+}
+
+#[derive(Debug, Serialize, FromRow)]
+struct Book {
+    book_id: i32,
+    book_name: String,
+    testament: String,
+
 }
 
 #[allow(unused_assignments)]
@@ -210,10 +226,15 @@ async fn get_translations(app_data: web::Data<AppData>) -> HttpResponse {
 async fn get_books(qp: web::Query<TranslationName2>, app_data: web::Data<AppData>) -> HttpResponse {
     let mut ot = Vec::new();
     let mut nt = Vec::new();
+    let mut translation_name = String::new();
     let q;
     if qp.translation.is_some() {
-        let t = qp.translation.clone().unwrap();
-        q = sqlx::query_as!(BookName, r#"SELECT name from "TranslationBookName" where translation_id=(select id from "Translation" where name=$1)"#, t.to_uppercase()).fetch_all(&app_data.pool).await.unwrap();
+        translation_name = qp.translation.clone().unwrap();
+    } else if qp.tr.is_some() {
+        translation_name = qp.tr.clone().unwrap(); 
+    }
+    if !translation_name.is_empty() {
+        q = sqlx::query_as!(BookName, r#"SELECT name from "TranslationBookName" where translation_id=(select id from "Translation" where name=$1)"#, translation_name.to_uppercase()).fetch_all(&app_data.pool).await.unwrap();
     } else {
         q = sqlx::query_as!(BookName, r#"SELECT name FROM "Book" order by id"#)
             .fetch_all(&app_data.pool)
@@ -275,6 +296,26 @@ async fn get_chaptercount(app_data: web::Data<AppData>, path: web::Path<String>)
     }));
 }
 
+#[get("/{translation}/info")]
+async fn get_translation_info(app_data: web::Data<AppData>, path: web::Path<String>) -> HttpResponse {
+    let translation = path.into_inner().to_uppercase();
+    let q = sqlx::query_as!(TranslationInfo, r#"SELECT name, l.lname as language, full_name, year, license, description from "Translation" join (select id, name as lname from "Language") l on l.id=language_id WHERE name=$1"#, &translation).fetch_one(&app_data.pool).await;
+    if q.is_err() {
+        return HttpResponse::BadRequest().json(json!(format!("The requested translation {} is not found on the server", &translation)))
+    }
+    return HttpResponse::Ok().json(q.unwrap());
+}
+
+#[get("/{translation}/books")]
+async fn get_translation_books(app_data: web::Data<AppData>, path: web::Path<String>) -> HttpResponse {
+    let translation = path.into_inner().to_uppercase();
+    let q = sqlx::query_as!(Book, r#"select b.id book_id, tb.name book_name, tn.name testament from "Book" b join "TestamentName" tn on b.testament=tn.testament join "Translation" t on t.id=tn.translation_id join "TranslationBookName" tb on tb.translation_id=t.id and b.id=tb.book_id where t.name=$1 order by b.id"#, &translation).fetch_all(&app_data.pool).await.unwrap();
+    if q.is_empty() {
+        return HttpResponse::BadRequest().json(json!(format!("The requested translation {} is not found on the server", &translation)))
+    }
+    return HttpResponse::Ok().json(q);
+}
+
 #[tokio::main]
 async fn main() -> std::io::Result<()> {
     let db_url = dotenvy::var("DATABASE_URL").unwrap();
@@ -292,6 +333,8 @@ async fn main() -> std::io::Result<()> {
             .service(get_abbreviations)
             .service(get_translations)
             .service(get_books)
+            .service(get_translation_books)
+            .service(get_translation_info)
             .service(get_chaptercount)
     })
     .bind(("127.0.0.1", 7000))?;
