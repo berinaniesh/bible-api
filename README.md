@@ -8,16 +8,17 @@ So, only Bible translations that are in the public domain are included.
 
 At the moment, the following translations are available.
 
-| Sl. No | Translation                | Language | Year               |
-| ------ | -------------------------- | -------- | ------------------ |
-| 1.     | Tamil Old Version (TOVBSI) | Tamil    | 1957               |
-| 2.     | King James Version (KJV)   | English  | 1611, revised 1769 |
-
+| Sl. No | Translation                     | Language  | Year               |
+| ------ | ------------------------------- | --------- | ------------------ |
+| 1.     | Tamil Old Version (TOVBSI)      | Tamil     | 1957               |
+| 2.     | King James Version (KJV)        | English   | 1611, revised 1769 |
+| 3.     | Malayalam Sathya Veda Pusthakam | Malayalam | 1910               |
 
 ## Sources
 
 1. [TOVBSI](https://github.com/berinaniesh/bible-tamil)
 2. [KJV](https://github.com/berinaniesh/bible-kjv)
+3. [MLSVP](https://github.com/tfbf/Bible-Malayalam-Sathyavedapusthakam-1910)
 
 ## Bible requests
 
