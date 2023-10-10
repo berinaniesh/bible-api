@@ -25,6 +25,8 @@ struct ApiDoc;
 #[tokio::main]
 async fn main() -> std::io::Result<()> {
     let db_url = dotenvy::var("DATABASE_URL").unwrap();
+    let port_string = dotenvy::var("PORT").unwrap_or(String::from("7000"));
+    let port: u16 = port_string.parse().unwrap_or(7000);
     let pool = PgPoolOptions::new().connect(db_url.as_str()).await.unwrap();
     let app_data = AppData { pool };
     std::env::set_var("RUST_LOG", "info");
@@ -49,6 +51,6 @@ async fn main() -> std::io::Result<()> {
             )
             .service(web::redirect("/docs", "/docs/"))
     })
-    .bind(("127.0.0.1", 7000))?;
+    .bind(("127.0.0.1", port))?;
     return server.run().await;
 }
