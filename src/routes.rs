@@ -320,10 +320,26 @@ pub async fn get_translation_books(
     path = "/search",
     request_body = SearchParameters,
     responses(
-        (status = 200, description = "Get list of books with respect to the translation", body = SearchParameters),
+        (status = 200, description = "Search throughout the bible", body = Verse),
     ),
 )]
 #[post("/search")]
-pub async fn search(_search_parameters: web::Json<SearchParameters>) -> HttpResponse {
-    return HttpResponse::Ok().json("ok");
+pub async fn search(search_parameters: web::Json<SearchParameters>, app_data: web::Data<AppData>) -> HttpResponse {
+    let mut qb: QueryBuilder<Postgres> = QueryBuilder::new(r#"
+    SELECT translation, book, book_name, chapter, verse_number, verse from fulltable where verse "#);
+    if search_parameters.match_case {
+        qb.push("like(");
+    } else {
+        qb.push("ilike(");
+    }
+    let actual_search_string = format!("%{}%", &search_parameters.search_text);
+    qb.push_bind(actual_search_string);
+    qb.push(")");
+    if search_parameters.translation.is_some() {
+        qb.push(" and translation=");
+        qb.push_bind(search_parameters.translation.clone().unwrap().to_uppercase());
+    }
+    let query = qb.build_query_as::<Verse>();
+    let verses = query.fetch_all(&app_data.pool).await.unwrap();
+    return HttpResponse::Ok().json(verses);
 }

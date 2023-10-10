@@ -121,7 +121,7 @@ pub struct TranslationSelector {
 pub struct SearchParameters {
     pub search_text: String,
     pub match_case: bool,
-    pub translations: Option<Vec<String>>,
+    pub translation: Option<String>,
     pub books: Option<Vec<String>>,
     pub abbreviations: Option<Vec<String>>,
 }
