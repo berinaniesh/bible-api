@@ -1,6 +1,6 @@
 mod models;
-mod routes;
 mod query_params;
+mod routes;
 
 use actix_cors::Cors;
 use actix_web::middleware::Logger;
@@ -9,8 +9,8 @@ use sqlx::postgres::{PgPool, PgPoolOptions};
 use utoipa::OpenApi;
 use utoipa_swagger_ui::SwaggerUi;
 
-use crate::routes::*;
 use crate::models::*;
+use crate::routes::*;
 
 #[derive(Debug, Clone)]
 pub struct AppData {
@@ -18,9 +18,20 @@ pub struct AppData {
 }
 
 #[derive(OpenApi)]
-#[openapi(paths(home, get_translations, get_verses, get_random_verse, get_abbreviations, get_translation_info, get_translation_books, get_chaptercount), components(schemas(TranslationInfo, Verse, Book, Count)))]
+#[openapi(
+    paths(
+        home,
+        get_translations,
+        get_verses,
+        get_random_verse,
+        get_abbreviations,
+        get_translation_info,
+        get_translation_books,
+        get_chaptercount
+    ),
+    components(schemas(Hello, TranslationInfo, Verse, Book, Count))
+)]
 struct ApiDoc;
-
 
 #[tokio::main]
 async fn main() -> std::io::Result<()> {
@@ -46,8 +57,7 @@ async fn main() -> std::io::Result<()> {
             .service(routes::get_chaptercount)
             .service(routes::get_random_verse)
             .service(
-                SwaggerUi::new("/docs/{_:.*}")
-                     .url("/api-docs/openapi.json", ApiDoc::openapi()),
+                SwaggerUi::new("/docs/{_:.*}").url("/api-docs/openapi.json", ApiDoc::openapi()),
             )
             .service(web::redirect("/docs", "/docs/"))
     })

@@ -1,11 +1,11 @@
-use serde_json::json;
-use rand::{thread_rng, Rng};
-use sqlx::{Postgres, QueryBuilder};
 use actix_web::{get, web, HttpResponse};
+use rand::{thread_rng, Rng};
+use serde_json::json;
+use sqlx::{Postgres, QueryBuilder};
 
 use crate::models::*;
-use crate::AppData;
 use crate::query_params::*;
+use crate::AppData;
 
 #[allow(unused_assignments)]
 pub async fn query_verses(qp: web::Query<VerseFilter>, app_data: web::Data<AppData>) -> Vec<Verse> {
@@ -112,33 +112,13 @@ pub async fn query_verses(qp: web::Query<VerseFilter>, app_data: web::Data<AppDa
     get,
     path = "/",
     responses(
-        (status = 200, description = "API healthy")
+        (status = 200, description = "API healthy", body = Hello)
     )
 )]
 #[get("/")]
-pub async fn home(app_data: web::Data<AppData>) -> HttpResponse {
-    let t = sqlx::query_as!(
-        TranslationName,
-        r#"SELECT name from "Translation" order by id"#
-    )
-    .fetch_all(&app_data.pool)
-    .await
-    .unwrap();
-    let mut translations: Vec<String> = Vec::new();
-    for i in t.iter() {
-        translations.push(i.name.clone());
-    }
-
-    HttpResponse::Ok().json(
-        json!({
-            "About": "REST API to serve bible verses",
-            "Repository": "https://github.com/berinaniesh/bible-api",
-            "Endpoints": ["/translations", "/verses", "/abbreviations", "/books"],
-            "ParametersForVerses": ["translation or tr", "book or b", "abbreviation or ab", "chapter or ch", "startchapter or sch", "endchapter or ech", "verse or v", "startverse or sv", "endverse or ev"],
-            "ParametersForBooks": ["translation"],
-            "Examples": ["/verses?translation=tovbsi&book=1+Samuel&abbreviation=1SA&chapter=1&verse=10", "/verses?tr=kjv&ab=jhn&ch=1&v=1"]
-        }),
-    )
+pub async fn home() -> HttpResponse {
+    let hello = Hello::default();
+    return HttpResponse::Ok().json(hello);
 }
 
 #[utoipa::path(
@@ -155,7 +135,10 @@ pub async fn get_translations(app_data: web::Data<AppData>) -> HttpResponse {
 }
 
 #[get("/books")]
-pub async fn get_books(qp: web::Query<TranslationSelector>, app_data: web::Data<AppData>) -> HttpResponse {
+pub async fn get_books(
+    qp: web::Query<TranslationSelector>,
+    app_data: web::Data<AppData>,
+) -> HttpResponse {
     let mut ot = Vec::new();
     let mut nt = Vec::new();
     let mut translation_name = String::new();
@@ -271,7 +254,10 @@ pub async fn get_random_verse(
     ),
 )]
 #[get("/chaptercount/{book}")]
-pub async fn get_chaptercount(app_data: web::Data<AppData>, path: web::Path<String>) -> HttpResponse {
+pub async fn get_chaptercount(
+    app_data: web::Data<AppData>,
+    path: web::Path<String>,
+) -> HttpResponse {
     let book = path.into_inner();
     let mut query_builder: QueryBuilder<Postgres> = QueryBuilder::new(
         r#"SELECT COUNT(*) AS count FROM "Chapter" WHERE book_id=(SELECT id FROM "Book" WHERE name="#,

@@ -1,6 +1,7 @@
 [package]
 name = "bible-api"
 authors = ["Berin Aniesh <berinaniesh@gmail.com>"]
+repository = "https://github.com/berinaniesh/bible-api"
 version = "0.1.0"
 edition = "2021"
 
