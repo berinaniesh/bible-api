@@ -1,5 +1,4 @@
 mod models;
-mod query_params;
 mod routes;
 
 use actix_cors::Cors;
@@ -27,9 +26,10 @@ pub struct AppData {
         get_abbreviations,
         get_translation_info,
         get_translation_books,
-        get_chaptercount
+        get_chaptercount,
+        search,
     ),
-    components(schemas(Hello, TranslationInfo, Verse, Book, Count))
+    components(schemas(Hello, TranslationInfo, Verse, Book, Count, SearchParameters))
 )]
 struct ApiDoc;
 
@@ -56,6 +56,7 @@ async fn main() -> std::io::Result<()> {
             .service(routes::get_translation_info)
             .service(routes::get_chaptercount)
             .service(routes::get_random_verse)
+            .service(routes::search)
             .service(
                 SwaggerUi::new("/docs/{_:.*}").url("/api-docs/openapi.json", ApiDoc::openapi()),
             )

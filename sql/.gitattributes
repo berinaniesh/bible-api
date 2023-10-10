@@ -1,0 +1,2 @@
+latest_data_only.sql filter=lfs diff=lfs merge=lfs -text
+latest_full.sql filter=lfs diff=lfs merge=lfs -text

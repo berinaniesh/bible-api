@@ -1,108 +1,107 @@
-use actix_web::{get, web, HttpResponse};
+use actix_web::{get, post, web, HttpResponse};
 use rand::{thread_rng, Rng};
 use serde_json::json;
 use sqlx::{Postgres, QueryBuilder};
 
 use crate::models::*;
-use crate::query_params::*;
 use crate::AppData;
 
 #[allow(unused_assignments)]
 pub async fn query_verses(qp: web::Query<VerseFilter>, app_data: web::Data<AppData>) -> Vec<Verse> {
     let mut is_first = true;
     let mut query_builder: QueryBuilder<Postgres> = QueryBuilder::new(
-        r#"select t.name as translation, b.name as book, tt.name as book_name, c.chapter_number as chapter, v.verse_number as verse_number, verse from "VerseText" vv join "Translation" t on vv.translation_id=t.id join "Verse" v on v.id=vv.verse_id join "Chapter" c on v.chapter_id=c.id join "Book" b on c.book_id=b.id join "TranslationBookName" tt on (t.id=tt.translation_id and b.id=tt.book_id)"#,
+        r#"SELECT translation, book, book_name, chapter, verse_number, verse FROM fulltable"#,
     );
 
     if let Some(x) = &qp.abbreviation {
-        query_builder.push(" where b.abbreviation=");
+        query_builder.push(" WHERE abbreviation=");
         is_first = false;
         query_builder.push_bind(x.to_uppercase());
     }
     if let Some(x) = &qp.ab {
         if is_first {
-            query_builder.push(" where b.abbreviation=");
+            query_builder.push(" WHERE abbreviation=");
             is_first = false;
         } else {
-            query_builder.push(" and b.abbreviation=");
+            query_builder.push(" AND abbreviation=");
         }
         query_builder.push_bind(x.to_uppercase());
     }
     if let Some(x) = &qp.book {
         if is_first {
-            query_builder.push(" where b.name=");
+            query_builder.push(" WHERE book=");
             is_first = false;
         } else {
-            query_builder.push(" and b.name=");
+            query_builder.push(" AND book=");
         }
         query_builder.push_bind(x);
     }
     if let Some(x) = &qp.b {
         if is_first {
-            query_builder.push(" where b.name=");
+            query_builder.push(" WHERE book=");
             is_first = false;
         } else {
-            query_builder.push(" and b.name=");
+            query_builder.push(" AND book=");
         }
         query_builder.push_bind(x);
     }
     if let Some(x) = &qp.ch {
-        query_builder.push(" and c.chapter_number=");
+        query_builder.push(" AND chapter=");
         query_builder.push_bind(x);
     }
     if let Some(x) = &qp.chapter {
-        query_builder.push(" and c.chapter_number=");
+        query_builder.push(" AND chapter=");
         query_builder.push_bind(x);
     }
     if let Some(x) = &qp.sch {
-        query_builder.push(" and c.chapter_number>=");
+        query_builder.push(" AND chapter>=");
         query_builder.push_bind(x);
     }
     if let Some(x) = &qp.startchapter {
-        query_builder.push(" and c.chapter_number>=");
+        query_builder.push(" AND chapter>=");
         query_builder.push_bind(x);
     }
     if let Some(x) = &qp.ech {
-        query_builder.push(" and c.chapter_number<=");
+        query_builder.push(" AND chapter<=");
         query_builder.push_bind(x);
     }
     if let Some(x) = &qp.endchapter {
-        query_builder.push(" and c.chapter_number<=");
+        query_builder.push(" AND chapter<=");
         query_builder.push_bind(x);
     }
     if let Some(x) = &qp.v {
-        query_builder.push(" and v.verse_number=");
+        query_builder.push(" AND verse_number=");
         query_builder.push_bind(x);
     }
     if let Some(x) = &qp.verse {
-        query_builder.push(" and v.verse_number=");
+        query_builder.push(" AND verse_number=");
         query_builder.push_bind(x);
     }
     if let Some(x) = &qp.sv {
-        query_builder.push(" and v.verse_number>=");
+        query_builder.push(" AND verse_number>=");
         query_builder.push_bind(x);
     }
     if let Some(x) = &qp.startverse {
-        query_builder.push(" and v.verse_number>=");
+        query_builder.push(" AND verse_number>=");
         query_builder.push_bind(x);
     }
     if let Some(x) = &qp.ev {
-        query_builder.push(" and v.verse_number<=");
+        query_builder.push(" AND verse_number<=");
         query_builder.push_bind(x);
     }
     if let Some(x) = &qp.endverse {
-        query_builder.push(" and v.verse_number<=");
+        query_builder.push(" AND verse_number<=");
         query_builder.push_bind(x);
     }
     if let Some(x) = &qp.tr {
-        query_builder.push(" and t.name=");
+        query_builder.push(" AND translation=");
         query_builder.push_bind(x.to_uppercase());
     }
     if let Some(x) = &qp.translation {
-        query_builder.push(" and t.name=");
+        query_builder.push(" AND translation=");
         query_builder.push_bind(x.to_uppercase());
     }
-    query_builder.push(" order by vv.id");
+    query_builder.push(" ORDER BY id");
     let query = query_builder.build_query_as::<Verse>();
     let verses = query.fetch_all(&app_data.pool).await.unwrap();
     return verses;
@@ -313,4 +312,18 @@ pub async fn get_translation_books(
         )));
     }
     return HttpResponse::Ok().json(q);
+}
+
+
+#[utoipa::path(
+    post,
+    path = "/search",
+    request_body = SearchParameters,
+    responses(
+        (status = 200, description = "Get list of books with respect to the translation", body = SearchParameters),
+    ),
+)]
+#[post("/search")]
+pub async fn search(_search_parameters: web::Json<SearchParameters>) -> HttpResponse {
+    return HttpResponse::Ok().json("ok");
 }

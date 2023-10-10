@@ -1,7 +1,7 @@
-use serde::Serialize;
+use serde::{Serialize, Deserialize};
 use sqlx::FromRow;
 use std::env;
-use utoipa::ToSchema;
+use utoipa::{ToSchema, IntoParams};
 
 #[derive(Debug, Serialize, ToSchema)]
 pub struct Hello {
@@ -85,4 +85,43 @@ pub struct Book {
     pub book_id: i32,
     pub book_name: String,
     pub testament: String,
+}
+
+// From user
+
+#[derive(Debug, Deserialize, IntoParams)]
+pub struct VerseFilter {
+    pub translation: Option<String>,
+    pub tr: Option<String>,
+    pub book: Option<String>,
+    pub b: Option<String>,
+    pub abbreviation: Option<String>,
+    pub ab: Option<String>,
+    pub chapter: Option<i32>,
+    pub ch: Option<i32>,
+    pub startchapter: Option<i32>,
+    pub sch: Option<i32>,
+    pub endchapter: Option<i32>,
+    pub ech: Option<i32>,
+    pub verse: Option<i32>,
+    pub v: Option<i32>,
+    pub startverse: Option<i32>,
+    pub sv: Option<i32>,
+    pub endverse: Option<i32>,
+    pub ev: Option<i32>,
+}
+
+#[derive(Debug, Deserialize, IntoParams)]
+pub struct TranslationSelector {
+    pub translation: Option<String>,
+    pub tr: Option<String>,
+}
+
+#[derive(Debug, Deserialize, ToSchema)]
+pub struct SearchParameters {
+    pub search_text: String,
+    pub match_case: bool,
+    pub translations: Option<Vec<String>>,
+    pub books: Option<Vec<String>>,
+    pub abbreviations: Option<Vec<String>>,
 }
