@@ -16,3 +16,5 @@ serde = { version = "1.0.188", features = ["derive"] }
 serde_json = { version = "1.0.106", features = ["preserve_order"] }
 sqlx = { version = "0.7.1", features = ["runtime-tokio-rustls", "postgres", "macros"] }
 tokio = { version = "1.32.0", features = ["fs", "rt-multi-thread", "macros"] }
+utoipa = { version = "4.0.0", features = ["actix_extras"] }
+utoipa-swagger-ui = { version = "4.0.0", features = ["actix-web"] }

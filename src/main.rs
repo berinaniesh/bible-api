@@ -1,16 +1,22 @@
 use actix_cors::Cors;
-use rand::{thread_rng, Rng};
 use actix_web::middleware::Logger;
 use actix_web::{get, web, App, HttpResponse, HttpServer};
+use rand::{thread_rng, Rng};
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 use sqlx::postgres::{PgPool, PgPoolOptions};
 use sqlx::{FromRow, Postgres, QueryBuilder};
+use utoipa::OpenApi;
+use utoipa_swagger_ui::SwaggerUi;
 
 #[derive(Debug, Clone)]
 struct AppData {
     pool: PgPool,
 }
+
+#[derive(OpenApi)]
+#[openapi(paths(home))]
+struct ApiDoc;
 
 #[derive(Debug, Clone, Serialize, FromRow)]
 struct Verse {
@@ -74,7 +80,6 @@ struct TranslationInfo {
 struct TranslationBook {
     book_number: i32,
     book_name: String,
-
 }
 
 #[derive(Debug, Serialize, FromRow)]
@@ -87,7 +92,6 @@ struct Book {
     book_id: i32,
     book_name: String,
     testament: String,
-
 }
 
 #[derive(Debug, Deserialize)]
@@ -197,6 +201,13 @@ async fn query_verses(qp: web::Query<VerseFilter>, app_data: web::Data<AppData>)
     return verses;
 }
 
+#[utoipa::path(
+    get,
+    path = "/",
+    responses(
+        (status = 200, description = "API healthy")
+    )
+)]
 #[get("/")]
 async fn home(app_data: web::Data<AppData>) -> HttpResponse {
     let t = sqlx::query_as!(
@@ -238,7 +249,7 @@ async fn get_books(qp: web::Query<TranslationName2>, app_data: web::Data<AppData
     if qp.translation.is_some() {
         translation_name = qp.translation.clone().unwrap();
     } else if qp.tr.is_some() {
-        translation_name = qp.tr.clone().unwrap(); 
+        translation_name = qp.tr.clone().unwrap();
     }
     if !translation_name.is_empty() {
         q = sqlx::query_as!(BookName, r#"SELECT name from "TranslationBookName" where translation_id=(select id from "Translation" where name=$1)"#, translation_name.to_uppercase()).fetch_all(&app_data.pool).await.unwrap();
@@ -291,12 +302,14 @@ async fn get_verses(app_data: web::Data<AppData>, qp: web::Query<VerseFilter>) -
 }
 
 #[get("/verses/random")]
-async fn get_random_verse(app_data: web::Data<AppData>, parameters: web::Query<TranslationSelector>) -> HttpResponse {
-
+async fn get_random_verse(
+    app_data: web::Data<AppData>,
+    parameters: web::Query<TranslationSelector>,
+) -> HttpResponse {
     let r: i32 = thread_rng().gen_range(1..31102);
     let mut qb: QueryBuilder<Postgres> = QueryBuilder::new(
-        r#"select t.name as translation, b.name as book, bb.name as book_name, c.chapter_number as chapter, v.verse_number as verse_number, vv.verse as verse from "VerseText" vv join "Translation" t on t.id=vv.translation_id join "Verse" v on v.id=vv.verse_id join "Chapter" c on c.id=v.chapter_id join "Book" b on b.id=c.book_id join "TranslationBookName" bb on bb.book_id=b.id and vv.translation_id=bb.translation_id where vv.verse_id="#
-        );
+        r#"select t.name as translation, b.name as book, bb.name as book_name, c.chapter_number as chapter, v.verse_number as verse_number, vv.verse as verse from "VerseText" vv join "Translation" t on t.id=vv.translation_id join "Verse" v on v.id=vv.verse_id join "Chapter" c on c.id=v.chapter_id join "Book" b on b.id=c.book_id join "TranslationBookName" bb on bb.book_id=b.id and vv.translation_id=bb.translation_id where vv.verse_id="#,
+    );
     qb.push_bind(r);
     if parameters.translation.is_some() {
         let tr = parameters.translation.clone().unwrap().to_uppercase();
@@ -310,14 +323,14 @@ async fn get_random_verse(app_data: web::Data<AppData>, parameters: web::Query<T
     let query = qb.build_query_as::<Verse>();
     let verses = query.fetch_all(&app_data.pool).await.unwrap();
     return HttpResponse::Ok().json(verses);
-
-    
 }
 
 #[get("/chaptercount/{book}")]
 async fn get_chaptercount(app_data: web::Data<AppData>, path: web::Path<String>) -> HttpResponse {
-    let book= path.into_inner();
-    let mut query_builder: QueryBuilder<Postgres> = QueryBuilder::new(r#"SELECT COUNT(*) AS count FROM "Chapter" WHERE book_id=(SELECT id FROM "Book" WHERE name="#);
+    let book = path.into_inner();
+    let mut query_builder: QueryBuilder<Postgres> = QueryBuilder::new(
+        r#"SELECT COUNT(*) AS count FROM "Chapter" WHERE book_id=(SELECT id FROM "Book" WHERE name="#,
+    );
     query_builder.push_bind(book);
     query_builder.push(")");
     let query = query_builder.build_query_as::<Count>();
@@ -328,21 +341,33 @@ async fn get_chaptercount(app_data: web::Data<AppData>, path: web::Path<String>)
 }
 
 #[get("/{translation}/info")]
-async fn get_translation_info(app_data: web::Data<AppData>, path: web::Path<String>) -> HttpResponse {
+async fn get_translation_info(
+    app_data: web::Data<AppData>,
+    path: web::Path<String>,
+) -> HttpResponse {
     let translation = path.into_inner().to_uppercase();
     let q = sqlx::query_as!(TranslationInfo, r#"SELECT name, l.lname as language, full_name, year, license, description from "Translation" join (select id, name as lname from "Language") l on l.id=language_id WHERE name=$1"#, &translation).fetch_one(&app_data.pool).await;
     if q.is_err() {
-        return HttpResponse::BadRequest().json(json!(format!("The requested translation {} is not found on the server", &translation)))
+        return HttpResponse::BadRequest().json(json!(format!(
+            "The requested translation {} is not found on the server",
+            &translation
+        )));
     }
     return HttpResponse::Ok().json(q.unwrap());
 }
 
 #[get("/{translation}/books")]
-async fn get_translation_books(app_data: web::Data<AppData>, path: web::Path<String>) -> HttpResponse {
+async fn get_translation_books(
+    app_data: web::Data<AppData>,
+    path: web::Path<String>,
+) -> HttpResponse {
     let translation = path.into_inner().to_uppercase();
     let q = sqlx::query_as!(Book, r#"select b.id book_id, tb.name book_name, tn.name testament from "Book" b join "TestamentName" tn on b.testament=tn.testament join "Translation" t on t.id=tn.translation_id join "TranslationBookName" tb on tb.translation_id=t.id and b.id=tb.book_id where t.name=$1 order by b.id"#, &translation).fetch_all(&app_data.pool).await.unwrap();
     if q.is_empty() {
-        return HttpResponse::BadRequest().json(json!(format!("The requested translation {} is not found on the server", &translation)))
+        return HttpResponse::BadRequest().json(json!(format!(
+            "The requested translation {} is not found on the server",
+            &translation
+        )));
     }
     return HttpResponse::Ok().json(q);
 }
@@ -368,6 +393,11 @@ async fn main() -> std::io::Result<()> {
             .service(get_translation_info)
             .service(get_chaptercount)
             .service(get_random_verse)
+            .service(
+                SwaggerUi::new("/docs/{_:.*}")
+                     .url("/api-docs/openapi.json", ApiDoc::openapi()),
+            )
+            .service(web::redirect("/docs", "/docs/"))
     })
     .bind(("127.0.0.1", 7000))?;
     return server.run().await;
