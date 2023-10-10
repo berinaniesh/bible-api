@@ -2,7 +2,7 @@ use serde::Serialize;
 use sqlx::FromRow;
 use utoipa::ToSchema;
 
-#[derive(Debug, Clone, Serialize, FromRow)]
+#[derive(Debug, Clone, Serialize, FromRow, ToSchema)]
 pub struct Verse {
     pub translation: String,
     pub book: String,

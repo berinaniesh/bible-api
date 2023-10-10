@@ -1,6 +1,7 @@
 use serde::Deserialize;
+use utoipa::IntoParams;
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, IntoParams)]
 pub struct VerseFilter {
     pub translation: Option<String>,
     pub tr: Option<String>,
@@ -22,7 +23,7 @@ pub struct VerseFilter {
     pub ev: Option<i32>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, IntoParams)]
 pub struct TranslationSelector {
     pub translation: Option<String>,
     pub tr: Option<String>,

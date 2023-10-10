@@ -191,6 +191,13 @@ pub async fn get_books(qp: web::Query<TranslationSelector>, app_data: web::Data<
     }));
 }
 
+#[utoipa::path(
+    get,
+    path = "/abbreviations",
+    responses(
+        (status = 200, description = "Get a list of abbreviations supported"),
+    ),
+)]
 #[get("/abbreviations")]
 pub async fn get_abbreviations(app_data: web::Data<AppData>) -> HttpResponse {
     let q = sqlx::query!(r#"SELECT abbreviation from "Book" order by id"#)
@@ -204,6 +211,15 @@ pub async fn get_abbreviations(app_data: web::Data<AppData>) -> HttpResponse {
     return HttpResponse::Ok().json(v);
 }
 
+#[utoipa::path(
+    get,
+    path = "/verses",
+    params (VerseFilter),
+    responses(
+        (status = 200, description = "Get verses based on query parameters", body = Verse),
+        (status = 400, description = "Either of book or abbreviation parameters is required")
+    ),
+)]
 #[get("/verses")]
 pub async fn get_verses(app_data: web::Data<AppData>, qp: web::Query<VerseFilter>) -> HttpResponse {
     if qp.book.is_none() && qp.b.is_none() && qp.abbreviation.is_none() && qp.ab.is_none() {
@@ -215,6 +231,14 @@ pub async fn get_verses(app_data: web::Data<AppData>, qp: web::Query<VerseFilter
     return HttpResponse::Ok().json(query);
 }
 
+#[utoipa::path(
+    get,
+    path = "/verses/random",
+    params (TranslationSelector),
+    responses(
+        (status = 200, description = "Get a random verse (not filtered for good verses, beware)", body = Verse),
+    ),
+)]
 #[get("/verses/random")]
 pub async fn get_random_verse(
     app_data: web::Data<AppData>,
