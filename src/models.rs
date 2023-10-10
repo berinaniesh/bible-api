@@ -1,5 +1,6 @@
 use serde::Serialize;
 use sqlx::FromRow;
+use utoipa::ToSchema;
 
 #[derive(Debug, Clone, Serialize, FromRow)]
 pub struct Verse {
@@ -12,7 +13,7 @@ pub struct Verse {
 }
 
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, ToSchema)]
 pub struct TranslationInfo {
     pub name: String,
     pub language: String,

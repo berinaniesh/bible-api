@@ -10,6 +10,7 @@ use utoipa::OpenApi;
 use utoipa_swagger_ui::SwaggerUi;
 
 use crate::routes::*;
+use crate::models::*;
 
 #[derive(Debug, Clone)]
 pub struct AppData {
@@ -17,7 +18,7 @@ pub struct AppData {
 }
 
 #[derive(OpenApi)]
-#[openapi(paths(home))]
+#[openapi(paths(home, get_translations), components(schemas(TranslationInfo)))]
 struct ApiDoc;
 
 

@@ -141,6 +141,13 @@ pub async fn home(app_data: web::Data<AppData>) -> HttpResponse {
     )
 }
 
+#[utoipa::path(
+    get,
+    path = "/translations",
+    responses(
+        (status = 200, description = "List of bible translations available", body = TranslationInfo)
+    )
+)]
 #[get("/translations")]
 pub async fn get_translations(app_data: web::Data<AppData>) -> HttpResponse {
     let q = sqlx::query_as!(TranslationInfo, r#"SELECT name, l.lname as language, full_name, year, license, description from "Translation" t join (select id, name as lname from "Language") l on l.id=language_id ORDER BY t.id"#).fetch_all(&app_data.pool).await.unwrap();
