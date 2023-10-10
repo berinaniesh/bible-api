@@ -10,6 +10,8 @@ pub struct Hello {
     pub about: String,
     pub docs: String,
     pub repository: String,
+    pub database: String,
+    pub text_encoding: String,
     pub author: String,
 }
 
@@ -20,6 +22,8 @@ impl Hello {
         let about = String::from("REST API to serve bible verses");
         let docs = String::from("/docs");
         let repository = String::from(env!("CARGO_PKG_REPOSITORY"));
+        let database = String::from("Postgresql");
+        let text_encoding = String::from("UTF-8");
         let author = String::from(env!("CARGO_PKG_AUTHORS"));
 
         return Hello {
@@ -28,6 +32,8 @@ impl Hello {
             about: about,
             docs: docs,
             repository: repository,
+            database: database,
+            text_encoding: text_encoding,
             author: author,
         };
     }
