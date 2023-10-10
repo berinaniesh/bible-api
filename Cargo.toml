@@ -11,6 +11,7 @@ actix-cors = "0.6.4"
 actix-web = "4.4.0"
 dotenvy = "0.15.7"
 env_logger = "0.10.0"
+rand = "0.8.5"
 serde = { version = "1.0.188", features = ["derive"] }
 serde_json = { version = "1.0.106", features = ["preserve_order"] }
 sqlx = { version = "0.7.1", features = ["runtime-tokio-rustls", "postgres", "macros"] }

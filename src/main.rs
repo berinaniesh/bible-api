@@ -1,4 +1,5 @@
 use actix_cors::Cors;
+use rand::{thread_rng, Rng};
 use actix_web::middleware::Logger;
 use actix_web::{get, web, App, HttpResponse, HttpServer};
 use serde::{Deserialize, Serialize};
@@ -87,6 +88,12 @@ struct Book {
     book_name: String,
     testament: String,
 
+}
+
+#[derive(Debug, Deserialize)]
+struct TranslationSelector {
+    tr: Option<String>,
+    translation: Option<String>,
 }
 
 #[allow(unused_assignments)]
@@ -283,6 +290,30 @@ async fn get_verses(app_data: web::Data<AppData>, qp: web::Query<VerseFilter>) -
     return HttpResponse::Ok().json(query);
 }
 
+#[get("/verses/random")]
+async fn get_random_verse(app_data: web::Data<AppData>, parameters: web::Query<TranslationSelector>) -> HttpResponse {
+
+    let r: i32 = thread_rng().gen_range(1..31102);
+    let mut qb: QueryBuilder<Postgres> = QueryBuilder::new(
+        r#"select t.name as translation, b.name as book, bb.name as book_name, c.chapter_number as chapter, v.verse_number as verse_number, vv.verse as verse from "VerseText" vv join "Translation" t on t.id=vv.translation_id join "Verse" v on v.id=vv.verse_id join "Chapter" c on c.id=v.chapter_id join "Book" b on b.id=c.book_id join "TranslationBookName" bb on bb.book_id=b.id and vv.translation_id=bb.translation_id where vv.verse_id="#
+        );
+    qb.push_bind(r);
+    if parameters.translation.is_some() {
+        let tr = parameters.translation.clone().unwrap().to_uppercase();
+        qb.push(" and t.name=");
+        qb.push_bind(tr);
+    } else if parameters.tr.is_some() {
+        let tr = parameters.tr.clone().unwrap().to_uppercase();
+        qb.push(" and t.name=");
+        qb.push_bind(tr);
+    }
+    let query = qb.build_query_as::<Verse>();
+    let verses = query.fetch_all(&app_data.pool).await.unwrap();
+    return HttpResponse::Ok().json(verses);
+
+    
+}
+
 #[get("/chaptercount/{book}")]
 async fn get_chaptercount(app_data: web::Data<AppData>, path: web::Path<String>) -> HttpResponse {
     let book= path.into_inner();
@@ -336,6 +367,7 @@ async fn main() -> std::io::Result<()> {
             .service(get_translation_books)
             .service(get_translation_info)
             .service(get_chaptercount)
+            .service(get_random_verse)
     })
     .bind(("127.0.0.1", 7000))?;
     return server.run().await;

@@ -303,6 +303,7 @@ dependencies = [
  "actix-web",
  "dotenvy",
  "env_logger",
+ "rand",
  "serde",
  "serde_json",
  "sqlx",
