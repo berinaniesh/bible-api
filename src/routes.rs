@@ -263,6 +263,13 @@ pub async fn get_random_verse(
     return HttpResponse::Ok().json(verses);
 }
 
+#[utoipa::path(
+    get,
+    path = "/chaptercount/{book}",
+    responses(
+        (status = 200, description = "Number of chapters in a book", body = Count),
+    ),
+)]
 #[get("/chaptercount/{book}")]
 pub async fn get_chaptercount(app_data: web::Data<AppData>, path: web::Path<String>) -> HttpResponse {
     let book = path.into_inner();
@@ -272,12 +279,17 @@ pub async fn get_chaptercount(app_data: web::Data<AppData>, path: web::Path<Stri
     query_builder.push_bind(book);
     query_builder.push(")");
     let query = query_builder.build_query_as::<Count>();
-    let count_res = query.fetch_one(&app_data.pool).await.unwrap();
-    return HttpResponse::Ok().json(json!({
-        "count": count_res.count
-    }));
+    let count = query.fetch_one(&app_data.pool).await.unwrap();
+    return HttpResponse::Ok().json(count);
 }
 
+#[utoipa::path(
+    get,
+    path = "/{translation}/info",
+    responses(
+        (status = 200, description = "Get information about specific translation", body = TranslationInfo),
+    ),
+)]
 #[get("/{translation}/info")]
 pub async fn get_translation_info(
     app_data: web::Data<AppData>,
@@ -294,6 +306,13 @@ pub async fn get_translation_info(
     return HttpResponse::Ok().json(q.unwrap());
 }
 
+#[utoipa::path(
+    get,
+    path = "/{translation}/books",
+    responses(
+        (status = 200, description = "Get list of books with respect to the translation", body = Book),
+    ),
+)]
 #[get("/{translation}/books")]
 pub async fn get_translation_books(
     app_data: web::Data<AppData>,

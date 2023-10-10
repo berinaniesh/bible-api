@@ -18,7 +18,7 @@ pub struct AppData {
 }
 
 #[derive(OpenApi)]
-#[openapi(paths(home, get_translations, get_verses, get_random_verse, get_abbreviations), components(schemas(TranslationInfo, Verse)))]
+#[openapi(paths(home, get_translations, get_verses, get_random_verse, get_abbreviations, get_translation_info, get_translation_books, get_chaptercount), components(schemas(TranslationInfo, Verse, Book, Count)))]
 struct ApiDoc;
 
 

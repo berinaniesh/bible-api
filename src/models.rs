@@ -39,12 +39,12 @@ pub struct TranslationBook {
     pub book_name: String,
 }
 
-#[derive(Debug, Serialize, FromRow)]
+#[derive(Debug, Serialize, FromRow, ToSchema)]
 pub struct Count {
     pub count: i64,
 }
 
-#[derive(Debug, Serialize, FromRow)]
+#[derive(Debug, Serialize, FromRow, ToSchema)]
 pub struct Book {
     pub book_id: i32,
     pub book_name: String,
