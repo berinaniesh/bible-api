@@ -304,7 +304,16 @@ pub async fn get_translation_books(
     path: web::Path<String>,
 ) -> HttpResponse {
     let translation = path.into_inner().to_uppercase();
-    let q = sqlx::query_as!(Book, r#"select b.id book_id, tb.name book_name, tn.name testament from "Book" b join "TestamentName" tn on b.testament=tn.testament join "Translation" t on t.id=tn.translation_id join "TranslationBookName" tb on tb.translation_id=t.id and b.id=tb.book_id where t.name=$1 order by b.id"#, &translation).fetch_all(&app_data.pool).await.unwrap();
+    let q = sqlx::query_as!(Book, r#"
+        SELECT b.id book_id, b.abbreviation abbreviation,
+        tb.name book_name, b.name book, b.testament as "testament: Testament",
+        tn.name testament_name from "Book" b 
+        join "TestamentName" tn on b.testament=tn.testament 
+        join "Translation" t on t.id=tn.translation_id 
+        join "TranslationBookName" tb 
+        on tb.translation_id=t.id and b.id=tb.book_id 
+        where t.name=$1 order by b.id
+        "#, &translation).fetch_all(&app_data.pool).await.unwrap();
     if q.is_empty() {
         return HttpResponse::BadRequest().json(json!(format!(
             "The requested translation {} is not found on the server",

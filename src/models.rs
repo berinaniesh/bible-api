@@ -1,7 +1,30 @@
 use serde::{Serialize, Deserialize};
-use sqlx::FromRow;
+use sqlx::{FromRow, Type};
+use std::fmt;
 use std::env;
 use utoipa::{ToSchema, IntoParams};
+
+#[derive(Debug, Deserialize, Serialize, Clone, Copy, Type)]
+#[sqlx(type_name = "testament")]
+pub enum Testament {
+    OldTestament,
+    NewTestament,
+}
+
+impl fmt::Display for Testament {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match &self {
+            Self::OldTestament => {
+                //fmt::Debug::fmt("Old", f)
+                write!(f, "Old Testament")
+            },
+            Self::NewTestament => {
+                //fmt::Debug::fmt("New", f)
+                write!(f, "New Testament")
+            }
+        }
+    }
+}
 
 #[derive(Debug, Serialize, ToSchema)]
 pub struct Hello {
@@ -83,8 +106,11 @@ pub struct Count {
 #[derive(Debug, Serialize, FromRow, ToSchema)]
 pub struct Book {
     pub book_id: i32,
+    pub book: String,
     pub book_name: String,
-    pub testament: String,
+    pub abbreviation: String,
+    pub testament: Testament,
+    pub testament_name: String,
 }
 
 // From user

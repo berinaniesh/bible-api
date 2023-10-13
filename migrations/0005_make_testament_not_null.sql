@@ -1,0 +1,2 @@
+ALTER TABLE "Book"
+ALTER COLUMN testament SET NOT NULL;
