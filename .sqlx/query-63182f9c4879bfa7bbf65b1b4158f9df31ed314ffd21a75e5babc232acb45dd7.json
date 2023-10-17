@@ -1,0 +1,62 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n        SELECT b.id book_id, b.abbreviation abbreviation,\n        tb.name book_name, b.name book, b.testament as \"testament: Testament\",\n        tn.name testament_name from \"Book\" b \n        join \"TestamentName\" tn on b.testament=tn.testament \n        join \"Translation\" t on t.id=tn.translation_id \n        join \"TranslationBookName\" tb \n        on tb.translation_id=t.id and b.id=tb.book_id \n        where t.name=$1 order by b.id\n        ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "book_id",
+        "type_info": "Int4"
+      },
+      {
+        "ordinal": 1,
+        "name": "abbreviation",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 2,
+        "name": "book_name",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 3,
+        "name": "book",
+        "type_info": "Varchar"
+      },
+      {
+        "ordinal": 4,
+        "name": "testament: Testament",
+        "type_info": {
+          "Custom": {
+            "name": "Testament",
+            "kind": {
+              "Enum": [
+                "OldTestament",
+                "NewTestament"
+              ]
+            }
+          }
+        }
+      },
+      {
+        "ordinal": 5,
+        "name": "testament_name",
+        "type_info": "Varchar"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Text"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "63182f9c4879bfa7bbf65b1b4158f9df31ed314ffd21a75e5babc232acb45dd7"
+}
