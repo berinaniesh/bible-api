@@ -20,6 +20,7 @@ At the moment, the following translations are available.
 1. [TOVBSI](https://github.com/berinaniesh/bible-tamil)
 2. [KJV](https://github.com/berinaniesh/bible-kjv)
 3. [MLSVP](https://github.com/tfbf/Bible-Malayalam-Sathyavedapusthakam-1910)
+4. [ASV](https://github.com/openbibleinfo/American-Standard-Version-Bible)
 
 ## Bible requests
 
