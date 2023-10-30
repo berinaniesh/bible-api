@@ -109,6 +109,7 @@ pub struct Book {
     pub book: String,
     pub book_name: String,
     pub abbreviation: String,
+    #[schema(value_type = String)]
     pub testament: Testament,
     pub testament_name: String,
 }

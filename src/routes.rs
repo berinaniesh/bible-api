@@ -107,8 +107,10 @@ pub async fn query_verses(qp: web::Query<VerseFilter>, app_data: web::Data<AppDa
     return verses;
 }
 
+/// Hello Message
 #[utoipa::path(
     get,
+    tag = "Hello",
     path = "/",
     responses(
         (status = 200, description = "API healthy", body = Hello)
@@ -120,8 +122,10 @@ pub async fn home() -> HttpResponse {
     return HttpResponse::Ok().json(hello);
 }
 
+/// Get a list of available translations
 #[utoipa::path(
     get,
+    tag = "Info",
     path = "/translations",
     responses(
         (status = 200, description = "List of bible translations available", body = TranslationInfo)
@@ -133,6 +137,16 @@ pub async fn get_translations(app_data: web::Data<AppData>) -> HttpResponse {
     return HttpResponse::Ok().json(q);
 }
 
+
+/// Get a list of Bible books
+#[utoipa::path(
+    get,
+    tag = "Info",
+    path = "/books",
+    responses(
+        (status = 200, description = "List of bible books", body = BookName)
+    )
+)]
 #[get("/books")]
 pub async fn get_books(
     qp: web::Query<TranslationSelector>,
@@ -173,8 +187,10 @@ pub async fn get_books(
     }));
 }
 
+/// Get a list of abbreviations of books
 #[utoipa::path(
     get,
+    tag = "Info",
     path = "/abbreviations",
     responses(
         (status = 200, description = "Get a list of abbreviations supported"),
@@ -193,8 +209,10 @@ pub async fn get_abbreviations(app_data: web::Data<AppData>) -> HttpResponse {
     return HttpResponse::Ok().json(v);
 }
 
+/// Get a list of verses by filtering with VerseFilter
 #[utoipa::path(
     get,
+    tag = "Verse",
     path = "/verses",
     params (VerseFilter),
     responses(
@@ -213,8 +231,10 @@ pub async fn get_verses(app_data: web::Data<AppData>, qp: web::Query<VerseFilter
     return HttpResponse::Ok().json(query);
 }
 
+/// Get a random verse (not filtered to get good verses)
 #[utoipa::path(
     get,
+    tag = "Verse",
     path = "/verses/random",
     params (TranslationSelector),
     responses(
@@ -245,8 +265,10 @@ pub async fn get_random_verse(
     return HttpResponse::Ok().json(verses);
 }
 
+/// Get the number of chapters in a book
 #[utoipa::path(
     get,
+    tag = "Info",
     path = "/chaptercount/{book}",
     responses(
         (status = 200, description = "Number of chapters in a book", body = Count),
@@ -268,8 +290,10 @@ pub async fn get_chaptercount(
     return HttpResponse::Ok().json(count);
 }
 
+/// Get information about a specific translation
 #[utoipa::path(
     get,
+    tag = "Info",
     path = "/{translation}/info",
     responses(
         (status = 200, description = "Get information about specific translation", body = TranslationInfo),
@@ -291,8 +315,12 @@ pub async fn get_translation_info(
     return HttpResponse::Ok().json(q.unwrap());
 }
 
+/// Get a list of books with respect to the translation
+/// 
+/// The name of the book in the translation language, etc
 #[utoipa::path(
     get,
+    tag = "Info",
     path = "/{translation}/books",
     responses(
         (status = 200, description = "Get list of books with respect to the translation", body = Book),
@@ -323,9 +351,10 @@ pub async fn get_translation_books(
     return HttpResponse::Ok().json(q);
 }
 
-
+/// Get verses based on text search
 #[utoipa::path(
     post,
+    tag = "Verse",
     path = "/search",
     request_body = SearchParameters,
     responses(
