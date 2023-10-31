@@ -40,7 +40,7 @@ async fn main() -> std::io::Result<()> {
     let port: u16 = port_string.parse().unwrap_or(7000);
     let pool = PgPoolOptions::new().connect(db_url.as_str()).await.unwrap();
     let app_data = AppData { pool };
-    std::env::set_var("RUST_LOG", "info");
+    std::env::set_var("RUST_LOG", "warn");
     env_logger::init();
     let server = HttpServer::new(move || {
         App::new()
