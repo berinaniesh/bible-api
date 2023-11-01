@@ -1,6 +1,9 @@
 mod models;
 mod routes;
 
+#[cfg(test)]
+mod tests;
+
 use actix_cors::Cors;
 use actix_web::middleware::Logger;
 use actix_web::{web, App, HttpServer};
