@@ -23,4 +23,4 @@ jobs:
           echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
           ssh-keyscan -H tncars.pp.ua > ~/.ssh/known_hosts
       - name: Deploy
-        run: scp target/debug/bible-api berinaniesh@tncars.pp.ua:/home/berinaniesh/tmp/bible-api
+        run: scp target/release/bible-api berinaniesh@tncars.pp.ua:/home/berinaniesh/tmp/bible-api
