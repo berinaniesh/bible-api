@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "SELECT name, l.lname as language, full_name, year, license, description from \"Translation\" join (select id, name as lname from \"Language\") l on l.id=language_id WHERE name=$1",
+  "query": "\n        SELECT name, l.lname AS language,\n        full_name, year, license, description\n        FROM \"Translation\" JOIN\n        (SELECT id, name AS lname FROM \"Language\") l\n        ON l.id=language_id WHERE name=$1",
   "describe": {
     "columns": [
       {
@@ -48,5 +48,5 @@
       true
     ]
   },
-  "hash": "e1aaed1bde4508db1dc701e1c82dabc7ae8d39f7077ff08a30427f162fadb8ec"
+  "hash": "546283f478af9dd86a2b2c4885bf0c0d88d3b47b25e18ed2bee11c575d15e0c8"
 }
