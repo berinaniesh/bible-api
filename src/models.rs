@@ -147,8 +147,22 @@ pub struct TranslationSelector {
 #[derive(Debug, Deserialize, ToSchema)]
 pub struct SearchParameters {
     pub search_text: String,
-    pub match_case: bool,
+    pub match_case: Option<bool>,
     pub translation: Option<String>,
     pub books: Option<Vec<String>>,
     pub abbreviations: Option<Vec<String>>,
+}
+
+#[derive(Debug, Deserialize, ToSchema)]
+pub struct PageIn {
+    pub book: Option<String>,
+    pub abbreviation: Option<String>,
+    pub chapter: i64,
+}
+
+#[derive(Debug, Serialize, ToSchema)]
+pub struct PageOut {
+    pub book: String,
+    pub abbreviation: String,
+    pub chapter: i64,
 }

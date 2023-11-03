@@ -1,5 +1,6 @@
 mod models;
 mod routes;
+mod error;
 
 #[cfg(test)]
 mod tests;
@@ -31,8 +32,9 @@ pub struct AppData {
         get_translation_books,
         get_chaptercount,
         search,
+        get_next_page,
     ),
-    components(schemas(Hello, TranslationInfo, Verse, Book, Count, SearchParameters))
+    components(schemas(Hello, TranslationInfo, Verse, Book, Count, SearchParameters, PageIn, PageOut))
 )]
 struct ApiDoc;
 
@@ -60,6 +62,7 @@ async fn main() -> std::io::Result<()> {
             .service(routes::get_chaptercount)
             .service(routes::get_random_verse)
             .service(routes::search)
+            .service(routes::get_next_page)
             .service(
                 SwaggerUi::new("/docs/{_:.*}").url("/api-docs/openapi.json", ApiDoc::openapi()),
             )
