@@ -15,6 +15,10 @@ At the moment, the following translations are available.
 | 3.     | Malayalam Sathya Veda Pusthakam (MLSVP) | Malayalam | 1910 |
 | 4.     | American Standard Version (ASV)         | English   | 1901 |
 
+## Documentation
+
+The API is documented using Swagger UI. The documentation can be found [here](https://api.bible.berinaniesh.xyz/docs/).
+
 ## Sources
 
 1. [TOVBSI](https://github.com/berinaniesh/bible-tamil)
