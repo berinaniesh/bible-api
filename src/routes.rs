@@ -426,6 +426,30 @@ pub async fn get_next_page(current_page: web::Json<PageIn>, app_data: web::Data<
         abbreviation).fetch_one(&app_data.pool).await?.id;
     }
 
+    if current_page.chapter == 0 {
+        if book_id == 1 {
+            previous = None
+        } else {
+            let p = sqlx::query!(
+                r#"
+                SELECT name, abbreviation FROM "Book" where id=$1
+                "#,
+                book_id-1).fetch_one(&app_data.pool).await?;
+            previous = Some(PageOut {book: p.name, abbreviation: p.abbreviation, chapter: 0});
+        }
+        if book_id == 66 {
+            next = None
+        } else {
+            let n = sqlx::query!(
+                r#"
+                SELECT name, abbreviation FROM "Book" WHERE id=$1
+                "#,
+                book_id+1).fetch_one(&app_data.pool).await?;
+            next = Some(PageOut{book: n.name, abbreviation: n.abbreviation, chapter: 0});
+        }
+        return Ok(HttpResponse::Ok().json(json!({"previous": previous, "next": next})))
+    }
+
     if book_id == 1 && current_page.chapter == 1 {
         previous = None;
     } else {
