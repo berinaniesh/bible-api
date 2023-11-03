@@ -365,7 +365,8 @@ pub async fn get_translation_books(
 pub async fn search(search_parameters: web::Json<SearchParameters>, app_data: web::Data<AppData>) -> HttpResponse {
     let mut qb: QueryBuilder<Postgres> = QueryBuilder::new(r#"
     SELECT translation, book, book_name, chapter, verse_number, verse from fulltable where verse "#);
-    if search_parameters.match_case {
+    let match_case = search_parameters.match_case.unwrap_or(false);
+    if match_case {
         qb.push("like(");
     } else {
         qb.push("ilike(");
@@ -380,4 +381,67 @@ pub async fn search(search_parameters: web::Json<SearchParameters>, app_data: we
     let query = qb.build_query_as::<Verse>();
     let verses = query.fetch_all(&app_data.pool).await.unwrap();
     return HttpResponse::Ok().json(verses);
+}
+
+/// Get the next chapter / book to go to
+///
+/// The frontend needs to know what page to go to once
+/// a user finishes reading one chapter and since the frontend
+/// doesn't have access to the database and it needs a few calls to
+/// the API to figure it out, it'd be nice to have the API give 
+/// the information directly. 
+#[utoipa::path(
+    post,
+    tag = "Frontend Helper",
+    path = "/next",
+    request_body = CurrentPage,
+    responses(
+        (status = 200, description = "Returns info about the next page to navigate to", body = NextPage),
+        (status = 400, description = "Atleast one argument of book or abbreviation is required",),
+    ),
+)]
+#[post("/next")]
+pub async fn get_next_page(current_page: web::Json<CurrentPage>, app_data: web::Data<AppData>) -> HttpResponse {
+    if current_page.book.is_none() && current_page.abbreviation.is_none() {
+        return HttpResponse::BadRequest().json(json!({
+            "message": "Either one of book or abbreviation is required"
+        }))
+    }
+    let mut is_revelation = false;
+    if current_page.book.is_some() {
+        let book = current_page.book.clone().unwrap();
+        if book == "Revelation" {
+            is_revelation = true;
+        }
+    }
+    if current_page.abbreviation.is_some() {
+        let abbreviation = current_page.abbreviation.clone().unwrap().to_uppercase();
+        if abbreviation == "REV" {
+            is_revelation = true;
+        }
+    }
+    if is_revelation && current_page.chapter == 22 {
+        let next_page = NextPage{book: "Genesis".to_string(), abbreviation: "GEN".to_string(), chapter: 1, bible_ended: true};
+        return HttpResponse::Ok().json(next_page);
+    }
+    let mut query_builder: QueryBuilder<Postgres> = QueryBuilder::new(
+        r#"SELECT COUNT(*) AS count FROM "Chapter" WHERE book_id=(SELECT id FROM "Book" WHERE"#,
+    );
+    if current_page.book.is_some() {
+        let book = current_page.book.clone().unwrap();
+        query_builder.push(" name=");
+        query_builder.push_bind(book);
+        query_builder.push(")");
+    } else {
+        let abbreviation = current_page.abbreviation.clone().unwrap();
+        query_builder.push(" abbreviation=");
+        query_builder.push_bind(abbreviation);
+        query_builder.push(")");
+    }
+    let query = query_builder.build_query_as::<Count>();
+    let current_book_chapter_count = query.fetch_one(&app_data.pool).await.unwrap().count;
+    if current_page.chapter < current_book_chapter_count {
+//        let next_page = NextPage {}
+    }
+    return HttpResponse::Ok().json("hello");
 }
