@@ -154,16 +154,15 @@ pub struct SearchParameters {
 }
 
 #[derive(Debug, Deserialize, ToSchema)]
-pub struct CurrentPage {
+pub struct PageIn {
     pub book: Option<String>,
-    pub abbreviation:  Option<String>,
+    pub abbreviation: Option<String>,
     pub chapter: i64,
 }
 
 #[derive(Debug, Serialize, ToSchema)]
-pub struct NextPage {
+pub struct PageOut {
     pub book: String,
     pub abbreviation: String,
-    pub chapter: i32,
-    pub bible_ended: bool,
+    pub chapter: i64,
 }

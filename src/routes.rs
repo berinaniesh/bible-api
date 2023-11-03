@@ -5,6 +5,7 @@ use sqlx::{Postgres, QueryBuilder};
 
 use crate::models::*;
 use crate::AppData;
+use crate::error::AppError;
 
 #[allow(unused_assignments)]
 pub async fn query_verses(qp: web::Query<VerseFilter>, app_data: web::Data<AppData>) -> Vec<Verse> {
@@ -303,16 +304,18 @@ pub async fn get_chaptercount(
 pub async fn get_translation_info(
     app_data: web::Data<AppData>,
     path: web::Path<String>,
-) -> HttpResponse {
+) -> Result<HttpResponse, AppError> {
     let translation = path.into_inner().to_uppercase();
-    let q = sqlx::query_as!(TranslationInfo, r#"SELECT name, l.lname as language, full_name, year, license, description from "Translation" join (select id, name as lname from "Language") l on l.id=language_id WHERE name=$1"#, &translation).fetch_one(&app_data.pool).await;
-    if q.is_err() {
-        return HttpResponse::BadRequest().json(json!(format!(
-            "The requested translation {} is not found on the server",
-            &translation
-        )));
-    }
-    return HttpResponse::Ok().json(q.unwrap());
+    let q = sqlx::query_as!(
+        TranslationInfo,
+        r#"
+        SELECT name, l.lname AS language,
+        full_name, year, license, description
+        FROM "Translation" JOIN
+        (SELECT id, name AS lname FROM "Language") l
+        ON l.id=language_id WHERE name=$1"#,
+        &translation).fetch_one(&app_data.pool).await?;
+    return Ok(HttpResponse::Ok().json(q));
 }
 
 /// Get a list of books with respect to the translation
@@ -383,65 +386,96 @@ pub async fn search(search_parameters: web::Json<SearchParameters>, app_data: we
     return HttpResponse::Ok().json(verses);
 }
 
-/// Get the next chapter / book to go to
+/// Get the previous and next chapter / book to go to
 ///
-/// The frontend needs to know what page to go to once
-/// a user finishes reading one chapter and since the frontend
-/// doesn't have access to the database and it needs a few calls to
-/// the API to figure it out, it'd be nice to have the API give 
-/// the information directly. 
+/// The frontend needs to know what page lies before and
+/// after a specific chapter. So, instead of making multiple
+/// API calls, the information is sent in a separate endpoint
 #[utoipa::path(
     post,
     tag = "Frontend Helper",
-    path = "/next",
-    request_body = CurrentPage,
+    path = "/nav",
+    request_body = PageIn,
     responses(
-        (status = 200, description = "Returns info about the next page to navigate to", body = NextPage),
+        (status = 200, description = "Returns info about the previous and next pages to navigate to", body = PageOut),
         (status = 400, description = "Atleast one argument of book or abbreviation is required",),
     ),
 )]
-#[post("/next")]
-pub async fn get_next_page(current_page: web::Json<CurrentPage>, app_data: web::Data<AppData>) -> HttpResponse {
+#[post("/nav")]
+pub async fn get_next_page(current_page: web::Json<PageIn>, app_data: web::Data<AppData>) -> Result<HttpResponse, AppError> {
     if current_page.book.is_none() && current_page.abbreviation.is_none() {
-        return HttpResponse::BadRequest().json(json!({
+        return Ok(HttpResponse::BadRequest().json(json!({
             "message": "Either one of book or abbreviation is required"
-        }))
+        })))
     }
-    let mut is_revelation = false;
-    if current_page.book.is_some() {
-        let book = current_page.book.clone().unwrap();
-        if book == "Revelation" {
-            is_revelation = true;
-        }
-    }
-    if current_page.abbreviation.is_some() {
-        let abbreviation = current_page.abbreviation.clone().unwrap().to_uppercase();
-        if abbreviation == "REV" {
-            is_revelation = true;
-        }
-    }
-    if is_revelation && current_page.chapter == 22 {
-        let next_page = NextPage{book: "Genesis".to_string(), abbreviation: "GEN".to_string(), chapter: 1, bible_ended: true};
-        return HttpResponse::Ok().json(next_page);
-    }
-    let mut query_builder: QueryBuilder<Postgres> = QueryBuilder::new(
-        r#"SELECT COUNT(*) AS count FROM "Chapter" WHERE book_id=(SELECT id FROM "Book" WHERE"#,
-    );
-    if current_page.book.is_some() {
-        let book = current_page.book.clone().unwrap();
-        query_builder.push(" name=");
-        query_builder.push_bind(book);
-        query_builder.push(")");
+    let previous: Option<PageOut>;
+    let next: Option<PageOut>;
+    let book_id;
+    if let Some(ref x) = current_page.book {
+        book_id = sqlx::query!(
+            r#"
+            SELECT id FROM "Book" WHERE name=$1
+            "#,
+        x).fetch_one(&app_data.pool).await?.id;
     } else {
-        let abbreviation = current_page.abbreviation.clone().unwrap();
-        query_builder.push(" abbreviation=");
-        query_builder.push_bind(abbreviation);
-        query_builder.push(")");
+        let abbreviation = current_page.abbreviation.clone().unwrap().to_uppercase();
+        book_id = sqlx::query!(
+            r#"
+            SELECT id FROM "Book" WHERE abbreviation=$1
+            "#,
+        abbreviation).fetch_one(&app_data.pool).await?.id;
     }
-    let query = query_builder.build_query_as::<Count>();
-    let current_book_chapter_count = query.fetch_one(&app_data.pool).await.unwrap().count;
-    if current_page.chapter < current_book_chapter_count {
-//        let next_page = NextPage {}
+
+    if book_id == 1 && current_page.chapter == 1 {
+        previous = None;
+    } else {
+        if current_page.chapter == 1 {
+            let previous_chapter_count = sqlx::query!(
+                r#"
+                SELECT COUNT(*) AS count FROM "Chapter" WHERE book_id=$1
+                "#,
+            book_id-1).fetch_one(&app_data.pool).await?.count.unwrap();
+            let previous_book = sqlx::query!(
+                r#"
+                SELECT name, abbreviation FROM "Book" WHERE id=$1
+                "#,
+                book_id-1).fetch_one(&app_data.pool).await?;
+            previous = Some(PageOut {book: previous_book.name, abbreviation: previous_book.abbreviation, chapter: previous_chapter_count});
+        } else {
+            let prev = sqlx::query!(
+                r#"
+                SELECT name, abbreviation FROM "Book" WHERE id=$1
+                "#,
+                book_id).fetch_one(&app_data.pool).await?;
+            previous = Some(PageOut{book: prev.name, abbreviation: prev.abbreviation, chapter: current_page.chapter - 1});
+        }
     }
-    return HttpResponse::Ok().json("hello");
+
+    if book_id == 66 && current_page.chapter == 22 {
+        next = None; 
+    } else {
+        let current_book_length = sqlx::query!(
+            r#"
+            SELECT COUNT(*) FROM "Chapter" WHERE book_id=$1
+            "#,
+            book_id).fetch_one(&app_data.pool).await?.count.unwrap();
+        if current_page.chapter == current_book_length {
+            let next_book = sqlx::query!(
+                r#"
+                SELECT name, abbreviation FROM "Book" WHERE id=$1
+                "#,
+                book_id+1).fetch_one(&app_data.pool).await?;
+            next = Some(PageOut{book: next_book.name, abbreviation: next_book.abbreviation, chapter: 1})
+        } else {
+            let bo = sqlx::query!(
+                r#"
+                SELECT name, abbreviation FROM "Book" WHERE id=$1
+                "#,
+                book_id).fetch_one(&app_data.pool).await?; 
+            next = Some(PageOut{book: bo.name, abbreviation: bo.abbreviation, chapter: current_page.chapter + 1});
+        }
+    }
+
+    return Ok(HttpResponse::Ok().json(json!({"previous": previous, "next":next})));
+
 }
