@@ -166,3 +166,9 @@ pub struct PageOut {
     pub abbreviation: String,
     pub chapter: i64,
 }
+
+#[derive(Debug, Serialize, ToSchema)]
+pub struct PrevNext {
+    pub previous: Option<PageOut>,
+    pub next: Option<PageOut>,
+}

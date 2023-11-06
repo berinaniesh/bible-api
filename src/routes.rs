@@ -397,7 +397,7 @@ pub async fn search(search_parameters: web::Json<SearchParameters>, app_data: we
     path = "/nav",
     request_body = PageIn,
     responses(
-        (status = 200, description = "Returns info about the previous and next pages to navigate to", body = PageOut),
+        (status = 200, description = "Returns info about the previous and next pages to navigate to", body = PrevNext),
         (status = 400, description = "Atleast one argument of book or abbreviation is required",),
     ),
 )]
@@ -447,7 +447,8 @@ pub async fn get_next_page(current_page: web::Json<PageIn>, app_data: web::Data<
                 book_id+1).fetch_one(&app_data.pool).await?;
             next = Some(PageOut{book: n.name, abbreviation: n.abbreviation, chapter: 0});
         }
-        return Ok(HttpResponse::Ok().json(json!({"previous": previous, "next": next})))
+        let prev_next = PrevNext {previous, next};
+        return Ok(HttpResponse::Ok().json(prev_next))
     }
 
     if book_id == 1 && current_page.chapter == 1 {
@@ -499,7 +500,8 @@ pub async fn get_next_page(current_page: web::Json<PageIn>, app_data: web::Data<
             next = Some(PageOut{book: bo.name, abbreviation: bo.abbreviation, chapter: current_page.chapter + 1});
         }
     }
+        let prev_next = PrevNext {previous, next};
 
-    return Ok(HttpResponse::Ok().json(json!({"previous": previous, "next":next})));
+    return Ok(HttpResponse::Ok().json(prev_next));
 
 }
