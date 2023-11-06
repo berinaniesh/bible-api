@@ -34,7 +34,7 @@ pub struct AppData {
         search,
         get_next_page,
     ),
-    components(schemas(Hello, TranslationInfo, Verse, Book, Count, SearchParameters, PageIn, PageOut))
+    components(schemas(Hello, TranslationInfo, Verse, VerseFilter, Book, Count, SearchParameters, PageIn, PageOut))
 )]
 struct ApiDoc;
 

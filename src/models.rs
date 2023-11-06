@@ -116,7 +116,7 @@ pub struct Book {
 
 // From user
 
-#[derive(Debug, Deserialize, IntoParams)]
+#[derive(Debug, Deserialize, IntoParams, ToSchema)]
 pub struct VerseFilter {
     pub translation: Option<String>,
     pub tr: Option<String>,
