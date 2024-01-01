@@ -146,7 +146,7 @@ pub async fn get_translations(app_data: web::Data<AppData>) -> HttpResponse {
     path = "/books",
     params (TranslationSelector),
     responses(
-        (status = 200, description = "List of bible books", body = BookName)
+        (status = 200, description = "List of bible books")
     )
 )]
 #[get("/books")]
@@ -275,6 +275,24 @@ pub async fn get_random_verse(
     return HttpResponse::Ok().json(verses);
 }
 
+///Get the number of chapters in all books
+///
+///This is hardcoded and the endpoint does not use the database
+#[utoipa::path(
+    get,
+    tag = "Info",
+    path = "/chaptercount",
+    responses(
+        (status = 200, description = "Number of chapters in all books", body = BooksChapterCount)
+        )
+    )
+]
+#[get("/chaptercount")]
+pub async fn get_chaptercount() -> HttpResponse {
+    let ans = BooksChapterCount::default();
+    return HttpResponse::Ok().json(ans);
+}
+
 /// Get the number of chapters in a book
 #[utoipa::path(
     get,
@@ -285,7 +303,7 @@ pub async fn get_random_verse(
     ),
 )]
 #[get("/chaptercount/{book}")]
-pub async fn get_chaptercount(
+pub async fn get_chaptercount_book(
     app_data: web::Data<AppData>,
     path: web::Path<String>,
 ) -> HttpResponse {

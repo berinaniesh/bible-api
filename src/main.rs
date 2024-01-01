@@ -1,6 +1,7 @@
 mod models;
 mod routes;
 mod error;
+mod constants;
 
 #[cfg(test)]
 mod tests;
@@ -32,10 +33,11 @@ pub struct AppData {
         get_translation_info,
         get_translation_books,
         get_chaptercount,
+        get_chaptercount_book,
         search,
         get_next_page,
     ),
-    components(schemas(Hello, TranslationInfo, Verse, VerseFilter, TranslationSelector, Book, Count, SearchParameters, PageIn, PageOut, PrevNext))
+    components(schemas(Hello, TranslationInfo, Verse, VerseFilter, TranslationSelector, Book, Count, SearchParameters, PageIn, PageOut, PrevNext, BooksChapterCount))
 )]
 struct ApiDoc;
 
@@ -61,6 +63,7 @@ async fn main() -> std::io::Result<()> {
             .service(routes::get_translation_books)
             .service(routes::get_translation_info)
             .service(routes::get_chaptercount)
+            .service(routes::get_chaptercount_book)
             .service(routes::get_random_verse)
             .service(routes::search)
             .service(routes::get_next_page)

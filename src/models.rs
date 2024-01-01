@@ -3,6 +3,7 @@ use sqlx::{FromRow, Type};
 use std::fmt;
 use std::env;
 use utoipa::{ToSchema, IntoParams};
+use crate::constants::{TOTAL, BOOKS, ABBREVIATIONS, CHAPTERCOUNT, VERSECOUNT};
 
 #[derive(Debug, Deserialize, Serialize, Clone, Copy, Type)]
 #[sqlx(type_name = "testament")]
@@ -171,4 +172,25 @@ pub struct PageOut {
 pub struct PrevNext {
     pub previous: Option<PageOut>,
     pub next: Option<PageOut>,
+}
+
+
+
+#[derive(Debug, Serialize, ToSchema)]
+pub struct BooksChapterCount {
+    pub book: String,
+    pub abbreviation: String,
+    pub chapters: u8,
+    pub verses: u16,
+}
+
+impl BooksChapterCount {
+    pub fn default() -> Vec<BooksChapterCount> {
+        let mut ans: Vec<BooksChapterCount> = Vec::with_capacity(TOTAL as usize);
+        for i in 0..TOTAL as usize {
+            let temp = BooksChapterCount {book: String::from(BOOKS[i]), abbreviation: String::from(ABBREVIATIONS[i]), chapters: CHAPTERCOUNT[i], verses: VERSECOUNT[i]};
+            ans.push(temp)
+        }
+        return ans;
+    }
 }
