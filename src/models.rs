@@ -138,7 +138,7 @@ pub struct VerseFilter {
     pub ev: Option<i32>,
 }
 
-#[derive(Debug, Deserialize, IntoParams)]
+#[derive(Debug, Deserialize, IntoParams, ToSchema)]
 pub struct TranslationSelector {
     pub translation: Option<String>,
     pub tr: Option<String>,

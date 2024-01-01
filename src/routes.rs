@@ -144,6 +144,7 @@ pub async fn get_translations(app_data: web::Data<AppData>) -> HttpResponse {
     get,
     tag = "Info",
     path = "/books",
+    params (TranslationSelector),
     responses(
         (status = 200, description = "List of bible books", body = BookName)
     )
@@ -163,7 +164,7 @@ pub async fn get_books(
         translation_name = qp.tr.clone().unwrap();
     }
     if !translation_name.is_empty() {
-        q = sqlx::query_as!(BookName, r#"SELECT name from "TranslationBookName" where translation_id=(select id from "Translation" where name=$1)"#, translation_name.to_uppercase()).fetch_all(&app_data.pool).await.unwrap();
+        q = sqlx::query_as!(BookName, r#"SELECT name from "TranslationBookName" where translation_id=(select id from "Translation" where name=$1) order by id"#, translation_name.to_uppercase()).fetch_all(&app_data.pool).await.unwrap();
     } else {
         q = sqlx::query_as!(BookName, r#"SELECT name FROM "Book" order by id"#)
             .fetch_all(&app_data.pool)
@@ -249,7 +250,15 @@ pub async fn get_random_verse(
 ) -> HttpResponse {
     let r: i32 = thread_rng().gen_range(1..31102);
     let mut qb: QueryBuilder<Postgres> = QueryBuilder::new(
-        r#"select t.name as translation, b.name as book, bb.name as book_name, c.chapter_number as chapter, v.verse_number as verse_number, vv.verse as verse from "VerseText" vv join "Translation" t on t.id=vv.translation_id join "Verse" v on v.id=vv.verse_id join "Chapter" c on c.id=v.chapter_id join "Book" b on b.id=c.book_id join "TranslationBookName" bb on bb.book_id=b.id and vv.translation_id=bb.translation_id where vv.verse_id="#,
+        r#"select t.name as translation, b.name as book, 
+        bb.name as book_name, c.chapter_number as chapter, 
+        v.verse_number as verse_number, vv.verse as verse from "VerseText" 
+        vv join "Translation" t on t.id=vv.translation_id join "Verse"
+        v on v.id=vv.verse_id join "Chapter"
+        c on c.id=v.chapter_id join "Book"
+        b on b.id=c.book_id join "TranslationBookName"
+        bb on bb.book_id=b.id and vv.translation_id=bb.translation_id
+        where vv.verse_id="#,
     );
     qb.push_bind(r);
     if parameters.translation.is_some() {

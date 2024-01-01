@@ -28,13 +28,14 @@ pub struct AppData {
         get_verses,
         get_random_verse,
         get_abbreviations,
+        get_books,
         get_translation_info,
         get_translation_books,
         get_chaptercount,
         search,
         get_next_page,
     ),
-    components(schemas(Hello, TranslationInfo, Verse, VerseFilter, Book, Count, SearchParameters, PageIn, PageOut, PrevNext))
+    components(schemas(Hello, TranslationInfo, Verse, VerseFilter, TranslationSelector, Book, Count, SearchParameters, PageIn, PageOut, PrevNext))
 )]
 struct ApiDoc;
 
