@@ -11,7 +11,7 @@ use crate::error::AppError;
 pub async fn query_verses(qp: web::Query<VerseFilter>, app_data: web::Data<AppData>) -> Vec<Verse> {
     let mut is_first = true;
     let mut query_builder: QueryBuilder<Postgres> = QueryBuilder::new(
-        r#"SELECT translation, book, book_name, chapter, verse_number, verse FROM fulltable"#,
+        r#"SELECT translation, book, abbreviation, book_name, chapter, verse_number, verse FROM fulltable"#,
     );
 
     if let Some(x) = &qp.abbreviation {
@@ -250,11 +250,7 @@ pub async fn get_random_verse(
 ) -> HttpResponse {
     let r: i32 = thread_rng().gen_range(1..31102);
     let mut qb: QueryBuilder<Postgres> = QueryBuilder::new(
-        r#"select t.name as translation, b.name as book, 
-        bb.name as book_name, c.chapter_number as chapter, 
-        v.verse_number as verse_number, vv.verse as verse from "VerseText" 
-        vv join "Translation" t on t.id=vv.translation_id join "Verse"
-        v on v.id=vv.verse_id join "Chapter"
+        r#"select t.name as translation, b.name as book, b.abbreviation as abbreviation, bb.name as book_name, c.chapter_number as chapter, v.verse_number as verse_number, vv.verse as verse from "VerseText" vv join "Translation" t on t.id=vv.translation_id join "Verse" v on v.id=vv.verse_id join "Chapter"
         c on c.id=v.chapter_id join "Book"
         b on b.id=c.book_id join "TranslationBookName"
         bb on bb.book_id=b.id and vv.translation_id=bb.translation_id

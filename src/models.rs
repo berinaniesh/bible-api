@@ -67,6 +67,7 @@ impl Hello {
 pub struct Verse {
     pub translation: String,
     pub book: String,
+    pub abbreviation: String,
     pub book_name: String,
     pub chapter: i32,
     pub verse_number: i32,
