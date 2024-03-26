@@ -390,16 +390,15 @@ pub async fn get_translation_books(
 #[post("/search")]
 pub async fn search(search_parameters: web::Json<SearchParameters>, app_data: web::Data<AppData>) -> HttpResponse {
     let mut qb: QueryBuilder<Postgres> = QueryBuilder::new(r#"
-    SELECT translation, book, book_name, chapter, verse_number, verse from fulltable where verse "#);
+    SELECT translation, book, abbreviation, book_name, chapter, verse_number, verse from fulltable where verse "#);
     let match_case = search_parameters.match_case.unwrap_or(false);
     if match_case {
-        qb.push("like(");
+        qb.push("like ");
     } else {
-        qb.push("ilike(");
+        qb.push("ilike ");
     }
     let actual_search_string = format!("%{}%", &search_parameters.search_text);
     qb.push_bind(actual_search_string);
-    qb.push(")");
     if search_parameters.translation.is_some() {
         qb.push(" and translation=");
         qb.push_bind(search_parameters.translation.clone().unwrap().to_uppercase());
