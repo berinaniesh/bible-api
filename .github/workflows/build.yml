@@ -21,6 +21,6 @@ jobs:
         run: |
           install -m 600 -D /dev/null ~/.ssh/id_ed25519
           echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
-          ssh-keyscan -H tncars.pp.ua > ~/.ssh/known_hosts
+          ssh-keyscan -H berinaniesh.xyz > ~/.ssh/known_hosts
       - name: Deploy
-        run: scp target/release/bible-api berinaniesh@tncars.pp.ua:/home/berinaniesh/tmp/bible-api
+        run: scp target/release/bible-api berinaniesh@berinaniesh.xyz:/home/berinaniesh/tmp/bible-api
