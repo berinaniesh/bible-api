@@ -85,11 +85,6 @@ pub struct TranslationInfo {
 }
 
 #[derive(Debug)]
-pub struct TranslationName {
-    pub name: String,
-}
-
-#[derive(Debug)]
 pub struct BookName {
     pub name: String,
 }
