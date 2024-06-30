@@ -15,6 +15,7 @@ At the moment, the following translations are available.
 | 3.     | Malayalam Sathya Veda Pusthakam (MLSVP) | Malayalam | 1910 |
 | 4.     | American Standard Version (ASV)         | English   | 1901 |
 | 5.     | World English Bible (WEB)               | English   | 2020 |
+| 6.     | World English Bible Updated (WEBU)      | English   | 2020 |
 
 ## Documentation
 
@@ -27,6 +28,7 @@ The API is documented using Swagger UI. The documentation can be found [here](ht
 3. [MLSVP](https://github.com/tfbf/Bible-Malayalam-Sathyavedapusthakam-1910)
 4. [ASV](https://github.com/openbibleinfo/American-Standard-Version-Bible)
 5. [WEB](https://gitlab.com/berinaniesh/WEB-db)
+6. [WEBU](https://gitlab.com/berinaniesh/WEBU-db)
 
 ## Bible requests
 
