@@ -399,9 +399,15 @@ pub async fn search(search_parameters: web::Json<SearchParameters>, app_data: we
     }
     let actual_search_string = format!("%{}%", &search_parameters.search_text);
     qb.push_bind(actual_search_string);
-    if search_parameters.translation.is_some() {
-        qb.push(" and translation=");
-        qb.push_bind(search_parameters.translation.clone().unwrap().to_uppercase());
+    qb.push(" and translation=");
+    qb.push_bind(search_parameters.translation.to_uppercase());
+    if let Some(book) = &search_parameters.book {
+        qb.push(" and book=");
+        qb.push_bind(book);
+    }
+    if let Some(abbreviaton) = &search_parameters.abbreviation {
+        qb.push(" and abbreviation=");
+        qb.push_bind(abbreviaton.to_uppercase());
     }
     let query = qb.build_query_as::<Verse>();
     let verses = query.fetch_all(&app_data.pool).await.unwrap();
