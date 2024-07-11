@@ -392,13 +392,24 @@ pub async fn search(search_parameters: web::Json<SearchParameters>, app_data: we
     let mut qb: QueryBuilder<Postgres> = QueryBuilder::new(r#"
     SELECT translation, book, abbreviation, book_name, chapter, verse_number, verse from fulltable where verse "#);
     let match_case = search_parameters.match_case.unwrap_or(false);
-    if match_case {
-        qb.push("like ");
+    let whole_words = search_parameters.whole_words.unwrap_or(false);
+    if whole_words {
+        if match_case {
+            qb.push("~ ");
+        } else {
+            qb.push("~* ");
+        }
+        let actual_search_string = format!(r#"\m{}\M"#, &search_parameters.search_text);
+        qb.push_bind(actual_search_string);
     } else {
-        qb.push("ilike ");
+        if match_case {
+            qb.push("like ");
+        } else {
+            qb.push("ilike ");
+        }
+        let actual_search_string = format!("%{}%", &search_parameters.search_text);
+        qb.push_bind(actual_search_string);
     }
-    let actual_search_string = format!("%{}%", &search_parameters.search_text);
-    qb.push_bind(actual_search_string);
     qb.push(" and translation=");
     qb.push_bind(search_parameters.translation.to_uppercase());
     if let Some(book) = &search_parameters.book {

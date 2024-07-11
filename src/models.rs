@@ -145,6 +145,7 @@ pub struct TranslationSelector {
 pub struct SearchParameters {
     pub search_text: String,
     pub match_case: Option<bool>,
+    pub whole_words: Option<bool>,
     pub translation: String,
     pub book: Option<String>,
     pub abbreviation: Option<String>,
