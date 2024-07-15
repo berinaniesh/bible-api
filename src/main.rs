@@ -1,7 +1,7 @@
+mod constants;
+mod error;
 mod models;
 mod routes;
-mod error;
-mod constants;
 
 #[cfg(test)]
 mod tests;
@@ -37,7 +37,20 @@ pub struct AppData {
         search,
         get_next_page,
     ),
-    components(schemas(Hello, TranslationInfo, Verse, VerseFilter, TranslationSelector, Book, Count, SearchParameters, PageIn, PageOut, PrevNext, BooksChapterCount))
+    components(schemas(
+        Hello,
+        TranslationInfo,
+        Verse,
+        VerseFilter,
+        TranslationSelector,
+        Book,
+        Count,
+        SearchParameters,
+        PageIn,
+        PageOut,
+        PrevNext,
+        BooksChapterCount
+    ))
 )]
 struct ApiDoc;
 

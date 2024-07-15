@@ -1,9 +1,9 @@
-use serde::{Serialize, Deserialize};
+use crate::constants::{ABBREVIATIONS, BOOKS, CHAPTERCOUNT, TOTAL, VERSECOUNT};
+use serde::{Deserialize, Serialize};
 use sqlx::{FromRow, Type};
-use std::fmt;
 use std::env;
-use utoipa::{ToSchema, IntoParams};
-use crate::constants::{TOTAL, BOOKS, ABBREVIATIONS, CHAPTERCOUNT, VERSECOUNT};
+use std::fmt;
+use utoipa::{IntoParams, ToSchema};
 
 #[derive(Debug, Deserialize, Serialize, Clone, Copy, Type)]
 #[sqlx(type_name = "testament")]
@@ -18,7 +18,7 @@ impl fmt::Display for Testament {
             Self::OldTestament => {
                 //fmt::Debug::fmt("Old", f)
                 write!(f, "Old Testament")
-            },
+            }
             Self::NewTestament => {
                 //fmt::Debug::fmt("New", f)
                 write!(f, "New Testament")
@@ -171,8 +171,6 @@ pub struct PrevNext {
     pub next: Option<PageOut>,
 }
 
-
-
 #[derive(Debug, Serialize, ToSchema)]
 pub struct BooksChapterCount {
     pub book: String,
@@ -185,7 +183,12 @@ impl BooksChapterCount {
     pub fn default() -> Vec<BooksChapterCount> {
         let mut ans: Vec<BooksChapterCount> = Vec::with_capacity(TOTAL as usize);
         for i in 0..TOTAL as usize {
-            let temp = BooksChapterCount {book: String::from(BOOKS[i]), abbreviation: String::from(ABBREVIATIONS[i]), chapters: CHAPTERCOUNT[i], verses: VERSECOUNT[i]};
+            let temp = BooksChapterCount {
+                book: String::from(BOOKS[i]),
+                abbreviation: String::from(ABBREVIATIONS[i]),
+                chapters: CHAPTERCOUNT[i],
+                verses: VERSECOUNT[i],
+            };
             ans.push(temp)
         }
         return ans;

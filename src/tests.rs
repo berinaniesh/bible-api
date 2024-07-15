@@ -1,4 +1,4 @@
-use actix_web::{test, App, http::header::ContentType};
+use actix_web::{http::header::ContentType, test, App};
 
 use crate::routes::home;
 
