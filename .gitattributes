@@ -1,1 +1,7 @@
 sql/bible.sql filter=lfs diff=lfs merge=lfs -text
+csv/ASV.csv.zst filter=lfs diff=lfs merge=lfs -text
+csv/KJV.csv.zst filter=lfs diff=lfs merge=lfs -text
+csv/MLSVP.csv.zst filter=lfs diff=lfs merge=lfs -text
+csv/TOVBSI.csv.zst filter=lfs diff=lfs merge=lfs -text
+csv/WEB.csv.zst filter=lfs diff=lfs merge=lfs -text
+csv/WEBU.csv.zst filter=lfs diff=lfs merge=lfs -text

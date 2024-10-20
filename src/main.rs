@@ -8,6 +8,7 @@ mod tests;
 
 use actix_cors::Cors;
 use actix_web::middleware::Logger;
+use actix_files as fs;
 use actix_web::{web, App, HttpServer};
 use sqlx::postgres::{PgPool, PgPoolOptions};
 use utoipa::OpenApi;
@@ -84,6 +85,7 @@ async fn main() -> std::io::Result<()> {
                 SwaggerUi::new("/docs/{_:.*}").url("/api-docs/openapi.json", ApiDoc::openapi()),
             )
             .service(web::redirect("/docs", "/docs/"))
+            .service(fs::Files::new("/csv", "./csv"))
     })
     .bind(("127.0.0.1", port))?;
     return server.run().await;
