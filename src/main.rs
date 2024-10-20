@@ -85,7 +85,7 @@ async fn main() -> std::io::Result<()> {
                 SwaggerUi::new("/docs/{_:.*}").url("/api-docs/openapi.json", ApiDoc::openapi()),
             )
             .service(web::redirect("/docs", "/docs/"))
-            .service(fs::Files::new("/csv", "./csv"))
+            .service(fs::Files::new("/csv", "./csv").show_files_listing())
     })
     .bind(("127.0.0.1", port))?;
     return server.run().await;
