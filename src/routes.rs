@@ -418,7 +418,7 @@ pub async fn search(
         } else {
             qb.push("~* ");
         }
-        let actual_search_string = format!(r#"\m{}\M"#, &search_parameters.search_text);
+        let actual_search_string = format!(r#"\m{}\M"#, &search_parameters.search_text.trim());
         qb.push_bind(actual_search_string);
     } else {
         if match_case {
@@ -426,7 +426,7 @@ pub async fn search(
         } else {
             qb.push("ilike ");
         }
-        let actual_search_string = format!("%{}%", &search_parameters.search_text);
+        let actual_search_string = format!("%{}%", &search_parameters.search_text.trim());
         qb.push_bind(actual_search_string);
     }
     qb.push(" and translation=");
