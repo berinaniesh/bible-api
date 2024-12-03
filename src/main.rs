@@ -13,6 +13,7 @@ use actix_web::{web, App, HttpServer};
 use sqlx::postgres::{PgPool, PgPoolOptions};
 use utoipa::OpenApi;
 use utoipa_swagger_ui::SwaggerUi;
+use utoipa::openapi::info::LicenseBuilder;
 
 use crate::models::*;
 use crate::routes::*;
@@ -62,6 +63,8 @@ async fn main() -> std::io::Result<()> {
     let port: u16 = port_string.parse().unwrap_or(7000);
     let pool = PgPoolOptions::new().connect(db_url.as_str()).await.unwrap();
     let app_data = AppData { pool };
+    let mut api_doc = ApiDoc::openapi();
+    api_doc.info.license = Some(LicenseBuilder::new().name("The Unlicense").identifier(Some(String::from("Unlicense"))).build());
     std::env::set_var("RUST_LOG", "warn");
     env_logger::init();
     let server = HttpServer::new(move || {
@@ -82,7 +85,7 @@ async fn main() -> std::io::Result<()> {
             .service(routes::search)
             .service(routes::get_next_page)
             .service(
-                SwaggerUi::new("/docs/{_:.*}").url("/api-docs/openapi.json", ApiDoc::openapi()),
+                SwaggerUi::new("/docs/{_:.*}").url("/api-docs/openapi.json", api_doc.clone()),
             )
             .service(web::redirect("/docs", "/docs/"))
             .service(fs::Files::new("/csv", "./csv").show_files_listing())
