@@ -14,7 +14,7 @@ load_dotenv()
 DATABASE_URL = os.getenv('DATABASE_URL')
 
 # List of possible translations
-translations = ["TOVBSI", "KJV", "MLSVP", "ASV", "WEB", "WEBU"]
+translations = ["TOVBSI", "KJV", "MLSVP", "ASV", "WEB", "WEBU", "GOVBSI", "OOVBSI"]
 
 def dump_to_csv(translation):
     if translation not in translations:

@@ -16,6 +16,8 @@ At the moment, the following translations are available.
 | 4.     | American Standard Version (ASV)         | English   | 1901 |
 | 5.     | World English Bible (WEB)               | English   | 2020 |
 | 6.     | World English Bible Updated (WEBU)      | English   | 2020 |
+| 7.     | Gujarati Old Version (GOVBSI)           | Gujarati  | 1908 |
+| 8.     | Odia Old Version (OOVBSI)               | Odia      | 1958 |
 
 ## Documentation
 
@@ -29,6 +31,8 @@ The API is documented using Swagger UI. The documentation can be found [here](ht
 4. [ASV](https://github.com/openbibleinfo/American-Standard-Version-Bible)
 5. [WEB](https://gitlab.com/berinaniesh/WEB-db)
 6. [WEBU](https://gitlab.com/berinaniesh/WEBU-db)
+7. [GOVBSI](https://gitlab.com/berinaniesh/bible-gujarati)
+8. [OOVBSI](https://gitlab.com/berinaniesh/bible-odia)
 
 ## Hosting
 
