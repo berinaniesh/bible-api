@@ -439,6 +439,7 @@ pub async fn search(
         qb.push(" and abbreviation=");
         qb.push_bind(abbreviaton.to_uppercase());
     }
+    qb.push(" ORDER BY id");
     let query = qb.build_query_as::<Verse>();
     let verses = query.fetch_all(&app_data.pool).await.unwrap();
     return HttpResponse::Ok().json(verses);
