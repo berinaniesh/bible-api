@@ -406,44 +406,90 @@ pub async fn search(
     if search_parameters.search_text.len() < 3 {
         return HttpResponse::Ok().json(Vec::<String>::new());
     }
-    let mut qb: QueryBuilder<Postgres> = QueryBuilder::new(
-        r#"
-    SELECT translation, book, abbreviation, book_name, chapter, verse_number, verse from fulltable where verse "#,
-    );
+
     let match_case = search_parameters.match_case.unwrap_or(false);
     let whole_words = search_parameters.whole_words.unwrap_or(false);
+
+    // Step 1: Build the CTE ("base") for the main translation
+    let mut base_qb: QueryBuilder<Postgres> = QueryBuilder::new(
+        r#"
+        WITH base AS (
+            SELECT id, book, chapter, verse_number
+            FROM fulltable
+            WHERE verse "#,
+    );
+
     if whole_words {
         if match_case {
-            qb.push("~ ");
+            base_qb.push("~ ");
         } else {
-            qb.push("~* ");
+            base_qb.push("~* ");
         }
         let actual_search_string = format!(r#"\m{}\M"#, &search_parameters.search_text.trim());
-        qb.push_bind(actual_search_string);
+        base_qb.push_bind(actual_search_string);
     } else {
         if match_case {
-            qb.push("like ");
+            base_qb.push("like ");
         } else {
-            qb.push("ilike ");
+            base_qb.push("ilike ");
         }
         let actual_search_string = format!("%{}%", &search_parameters.search_text.trim());
-        qb.push_bind(actual_search_string);
+        base_qb.push_bind(actual_search_string);
     }
-    qb.push(" and translation=");
-    qb.push_bind(search_parameters.translation.to_uppercase());
+
+    base_qb.push(" AND translation=");
+    base_qb.push_bind(search_parameters.translation.to_uppercase());
+
     if let Some(book) = &search_parameters.book {
-        qb.push(" and book=");
-        qb.push_bind(book);
+        base_qb.push(" AND book=");
+        base_qb.push_bind(book);
     }
-    if let Some(abbreviaton) = &search_parameters.abbreviation {
-        qb.push(" and abbreviation=");
-        qb.push_bind(abbreviaton.to_uppercase());
+    if let Some(abbreviation) = &search_parameters.abbreviation {
+        base_qb.push(" AND abbreviation=");
+        base_qb.push_bind(abbreviation.to_uppercase());
     }
-    qb.push(" ORDER BY id");
-    let query = qb.build_query_as::<Verse>();
+    base_qb.push(")");
+
+    // Step 2: Query all requested translations (base + parallel)
+    base_qb.push(
+        r#"
+        SELECT f.translation, f.book, f.abbreviation, f.book_name,
+               f.chapter, f.verse_number, f.verse
+        FROM fulltable f
+        JOIN base b
+          ON f.book = b.book
+         AND f.chapter = b.chapter
+         AND f.verse_number = b.verse_number
+        WHERE f.translation IN ("#,
+    );
+
+    // Always include the base translation
+    let mut separated = base_qb.separated(", ");
+    separated.push_bind(search_parameters.translation.to_uppercase());
+
+    // Add parallel translations if provided
+    if let Some(parallels) = &search_parameters.parallel_translations {
+        for t in parallels {
+            separated.push_bind(t.to_uppercase());
+        }
+    }
+    base_qb.push(")");
+
+    base_qb.push(
+        r#"
+        ORDER BY b.id,
+                 CASE f.translation
+                    WHEN "#,
+    );
+    base_qb.push_bind(search_parameters.translation.to_uppercase());
+    base_qb.push(" THEN 1 ELSE 2 END");
+
+    let query = base_qb.build_query_as::<Verse>();
     let verses = query.fetch_all(&app_data.pool).await.unwrap();
-    return HttpResponse::Ok().json(verses);
+
+    HttpResponse::Ok().json(verses)
 }
+
 
 /// Get the previous and next chapter / book to go to
 ///

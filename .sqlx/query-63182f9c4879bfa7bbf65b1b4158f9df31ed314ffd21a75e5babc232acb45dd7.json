@@ -28,7 +28,7 @@
         "name": "testament: Testament",
         "type_info": {
           "Custom": {
-            "name": "Testament",
+            "name": "\"Testament\"",
             "kind": {
               "Enum": [
                 "OldTestament",

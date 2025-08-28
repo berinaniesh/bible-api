@@ -149,6 +149,7 @@ pub struct SearchParameters {
     pub translation: String,
     pub book: Option<String>,
     pub abbreviation: Option<String>,
+    pub parallel_translations: Option<Vec<String>>,
 }
 
 #[derive(Debug, Deserialize, ToSchema)]
