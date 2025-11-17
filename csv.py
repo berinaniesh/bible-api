@@ -1,11 +1,10 @@
 import os
+import glob
 import subprocess
-from dotenv import load_dotenv
 from urllib.parse import urlparse
 
-import glob
 import zstandard as zstd
-import os
+from dotenv import load_dotenv
 
 # Load environment variables from .env file
 load_dotenv()
